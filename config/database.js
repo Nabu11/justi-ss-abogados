@@ -141,20 +141,61 @@ class Database {
 
   getChats() {
     const db = this._read();
-    return Object.values(db.chats || {});
+    const chatsMap = db.chats || {};
+    const mergedChats = {};
+
+    // Group chats by pushName or phone to consolidate LID duplicates
+    Object.values(chatsMap).forEach(chat => {
+      const key = (chat.pushName && chat.pushName !== 'Cliente WhatsApp') 
+        ? chat.pushName.toLowerCase().trim() 
+        : chat.phone;
+
+      if (!mergedChats[key]) {
+        mergedChats[key] = { ...chat, messages: [...(chat.messages || [])] };
+      } else {
+        // Merge messages and update last message info
+        const target = mergedChats[key];
+        target.messages = [...target.messages, ...(chat.messages || [])];
+        // Sort by timestamp
+        target.messages.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+        
+        const lastMsgObj = target.messages[target.messages.length - 1];
+        if (lastMsgObj) {
+          target.lastMessage = lastMsgObj.text;
+          target.lastMessageTime = lastMsgObj.timestamp;
+        }
+        if (chat.isUrgent) target.isUrgent = true;
+      }
+    });
+
+    return Object.values(mergedChats);
   }
 
   getChat(phone) {
-    const db = this._read();
-    return db.chats[phone] || null;
+    const chats = this.getChats();
+    return chats.find(c => c.phone === phone || (c.pushName && phone && c.pushName.toLowerCase() === phone.toLowerCase())) || null;
   }
 
   saveMessage(phone, pushName, sender, text, isUrgent = false) {
     const db = this._read();
-    if (!db.chats[phone]) {
-      db.chats[phone] = {
-        phone,
-        pushName: pushName || phone,
+    
+    // Unify chat by pushName or phone to merge LID and phone JIDs
+    let chatKey = phone;
+    if (!db.chats[chatKey]) {
+      const matchKey = Object.keys(db.chats).find(k => 
+        db.chats[k].pushName && pushName && 
+        db.chats[k].pushName.toLowerCase().trim() === pushName.toLowerCase().trim() && 
+        pushName.toLowerCase() !== 'cliente whatsapp'
+      );
+      if (matchKey) {
+        chatKey = matchKey;
+      }
+    }
+
+    if (!db.chats[chatKey]) {
+      db.chats[chatKey] = {
+        phone: chatKey,
+        pushName: pushName || chatKey,
         lastMessage: text,
         lastMessageTime: new Date().toISOString(),
         unreadCount: sender === 'client' ? 1 : 0,
@@ -164,7 +205,10 @@ class Database {
       };
     }
 
-    const chat = db.chats[phone];
+    const chat = db.chats[chatKey];
+    if (pushName && pushName !== 'Cliente WhatsApp') {
+      chat.pushName = pushName;
+    }
     chat.lastMessage = text;
     chat.lastMessageTime = new Date().toISOString();
     if (isUrgent) chat.isUrgent = true;
@@ -183,11 +227,13 @@ class Database {
 
   toggleBotPause(phone, paused) {
     const db = this._read();
-    if (db.chats[phone]) {
-      db.chats[phone].pausedBot = paused;
+    const chatKey = Object.keys(db.chats).find(k => k === phone || (db.chats[k].pushName && db.chats[k].pushName.toLowerCase() === phone.toLowerCase()));
+    if (chatKey && db.chats[chatKey]) {
+      db.chats[chatKey].pausedBot = paused;
       this._write(db);
+      return db.chats[chatKey];
     }
-    return db.chats[phone];
+    return null;
   }
 
   clearAllData() {
