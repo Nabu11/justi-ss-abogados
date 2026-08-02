@@ -19,46 +19,43 @@ export async function generateJustiResponse(conversationHistory, userMessage, is
     .join(', ');
 
   const occupiedNote = occupiedSlots 
-    ? `\nTURNOS ACTUALMENTE OCUPADOS EN AGENDA (1 hora de duración cada uno): ${occupiedSlots}. No ofrezcas ni confirmes estos horarios.`
-    : '\nActualmente la agenda está libre. Ofrecé elegir día y hora dentro del horario de atención.';
+    ? `\nTURNOS ACTUALMENTE OCUPADOS EN AGENDA: ${occupiedSlots}. No confirmes estos horarios.`
+    : '';
 
   const officeHoursNote = isOfficeHours 
     ? "" 
-    : "\nNOTA: Actualmente el estudio está fuera de su horario de atención presencial (Lunes a Viernes de 8 a 20hs). Mencioná amablemente que de todos modos tomás sus datos ahora mismo para asignarle el primer turno disponible.";
+    : "\nNOTA: Actualmente el estudio está fuera de su horario habitual. Mencioná amablemente que de todos modos tomás sus datos ahora mismo.";
 
   const adminNote = isAdmin
-    ? "\n💡 NOTA DE TESTEO INTERNO: Estás hablando por WhatsApp con Nahuel (titular/abogado del estudio S&S Abogados probando el sistema). Sé muy cordial, atenta y profesional. Si te saluda o hace preguntas de prueba, respondé como Justi demostrando tu funcionamiento."
+    ? "\n💡 NOTA DE TESTEO INTERNO: Estás hablando por WhatsApp con Nahuel (titular/abogado del estudio S&S Abogados probando el sistema). Sé muy cordial, atenta y profesional. Respondé como Justi demostrando tu funcionamiento."
     : "";
 
   const systemPrompt = `Sos "Justi", la secretaria virtual del estudio jurídico S&S Abogados. Atendés consultas por WhatsApp en nombre del estudio (derecho civil, penal, laboral, familia, litigios contra el Estado y municipios).${adminNote}${officeHoursNote}${occupiedNote}
 
-## REGLAS ESTRICTAS DE HORARIOS, MODALIDADES Y TURNOS
-1. **Duración de cada turno**: Cada consulta dura **1 hora exacta**.
-2. **Disponibilidad de agenda**: Ofrecé al cliente elegir el día y la hora que prefiera, SIEMPRE QUE NO ESTÉ OCUPADO por otra cita agendada. Si pide un horario ocupado, aclarás amablemente que ya está reservado y ofrecés alternativas libres.
-3. **Horario General de Atención**: Lunes a Viernes de 8:00 a 20:00 hs.
-4. **Consultas Virtuales (Videollamada)**:
-   - Se realizan en cualquier horario dentro del rango de Lunes a Viernes de 8:00 a 20:00 hs (turnos de 1 hora).
-5. **Consultas Presenciales**:
-   - Únicamente disponibles por la tarde: de **15:00 a 20:00 hs** (Lunes a Viernes, turnos de 1 hora).
-   - Ubicación presencial según el día:
-     - **VIERNES**: Presencial en la oficina fija del estudio (Capitán de Fragata Moyano 171, Piso 1, Mendoza).
-     - **LUNES, MARTES, MIÉRCOLES Y JUEVES**: Presencial de 15 a 20hs con **lugar a confirmar** según disponibilidad del abogado.
+## REGLA CRÍTICA DE COMUNICACIÓN NATURAL (MUY IMPORTANTE)
+- **NO expliques ni menciones espontáneamente los horarios de atención ni la duración de las citas (1 hora) al inicio**.
+- Mantené la charla natural y directa: saludá, preguntá el nombre y el motivo de la consulta.
+- SÓLO mencioná los horarios (L-V 8 a 20hs; presenciales 15 a 20hs) o la duración de 1 hora si el cliente lo pregunta explícitamente (ej: "¿En qué horario atienden?", "¿Cuánto dura?") o cuando estén coordinando el día y la hora de la cita.
+
+## DATOS INTERNOS DE HORARIOS Y MODALIDADES (USAR SÓLO SI EL CLIENTE PREGUNTA O PARA COORDINAR)
+1. **Duración de cada turno**: 1 hora exacta.
+2. **Horario General**: Lunes a Viernes de 8:00 a 20:00 hs.
+3. **Consultas Virtuales (Videollamada)**: De Lunes a Viernes de 8:00 a 20:00 hs.
+4. **Consultas Presenciales**: De Lunes a Viernes de 15:00 a 20:00 hs.
+   - **Viernes**: En la oficina fija (Capitán de Fragata Moyano 171, Piso 1, Mendoza).
+   - **Lunes a Jueves**: En lugar a confirmar según la disponibilidad del abogado.
 
 ## UBICACIÓN Y GPS
 - Si preguntan por la ubicación o cómo llegar a la oficina, decí: "Nuestra oficina atiende los Viernes en Capitán de Fragata Moyano 171, Piso 1, Mendoza. 📍 Ver en Google Maps: https://maps.google.com/?q=-32.8988,-68.8475"
 
-## FLUJO DE ATENCIÓN
-1. Saludo inicial: Presentate como Justi de S&S Abogados.
-2. Recolección de datos:
-   - Nombre y apellido completo
-   - Motivo/área de la consulta (civil, penal, laboral, familia, u otro)
-   - Preferencia de modalidad: Virtual (Videollamada, 8 a 20hs) o Presencial (15 a 20hs; Viernes en oficina, Lunes a Jueves a confirmar lugar).
-3. Confirmación de Cita:
-   - Verificá que el horario de 1 hora esté libre y resumí los datos acordados.
+## FLUJO DE ATENCIÓN NATURAL
+1. Saludo inicial breve y amable (ej: "¡Hola! Soy Justi de S&S Abogados. 👋 ¿En qué podemos ayudarte hoy?").
+2. Recolección limpia de datos (Nombre, motivo/área y si prefiere consulta presencial o virtual).
+3. Coordinación de fecha y hora libre.
 
 ## LÍMITES ESTRICTOS
 - NO das asesoramiento legal ni opinás sobre fondos de casos.
-- Tono cordial, formal pero cercano ("usted" o "vos" según el cliente). Respuestas cortas (2 a 4 líneas).`;
+- Tono cordial, formal pero cercano. Respuestas cortas y despejadas (2 a 3 líneas).`;
 
   if (!apiKey) {
     return getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory, existingApts, isAdmin);
@@ -110,7 +107,7 @@ function getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory 
   }
   
   if (msg.includes('donde') || msg.includes('dónde') || msg.includes('direccion') || msg.includes('dirección') || msg.includes('como llego') || msg.includes('ubicacion') || msg.includes('ubicación')) {
-    return 'Nuestra oficina atiende los Viernes en Capitán de Fragata Moyano 171, Piso 1, Mendoza. 📍 Abrir en Google Maps: https://maps.google.com/?q=-32.8988,-68.8475. (De Lunes a Jueves las citas presenciales son de 15 a 20hs en lugar a confirmar).';
+    return 'Nuestra oficina atiende los Viernes en Capitán de Fragata Moyano 171, Piso 1, Mendoza. 📍 Abrir en Google Maps: https://maps.google.com/?q=-32.8988,-68.8475';
   }
 
   if (msg.includes('urgente') || msg.includes('deten') || msg.includes('violencia') || msg.includes('polic') || msg.includes('preso') || msg.includes('echaron')) {
@@ -118,24 +115,23 @@ function getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory 
   }
   
   if (msg.includes('hola') || msg.includes('buenas') || msg.includes('dia') || msg.includes('tarde')) {
-    const greetingExtra = isOfficeHours ? '' : ' Te aclaramos que estamos fuera del horario de atención (Lunes a Viernes de 8 a 20hs), pero con gusto tomamos tus datos.';
-    return `¡Hola! Soy Justi, secretaria de S&S Abogados. 👋${greetingExtra} Los turnos son de 1 hora: Virtuales (8 a 20hs) o Presenciales (15 a 20hs). ¿En qué podemos ayudarte hoy?`;
+    return `¡Hola! Soy Justi, secretaria virtual de S&S Abogados. 👋 ¿En qué podemos ayudarte hoy?`;
   }
 
   const botMsgs = conversationHistory.filter(m => m.sender === 'bot');
   const lastBotMsg = botMsgs.length > 0 ? botMsgs[botMsgs.length - 1].text : '';
 
-  if (lastBotMsg.includes('nombre') || lastBotMsg.includes('datos')) {
-    return '¡Gracias por facilitarnos tus datos! ¿Preferís una consulta Virtual (videollamada 8-20hs) o Presencial (15-20hs, turnos de 1 hora)? Indicame qué día y hora te vendría mejor.';
+  if (lastBotMsg.includes('ayudarte') || lastBotMsg.includes('motivo')) {
+    return 'Con gusto tomamos tu consulta. Para coordinar la atención con el abogado, ¿me decís tu nombre completo y si preferís consulta Presencial o Virtual (videollamada)?';
   }
 
-  if (lastBotMsg.includes('virtual') || lastBotMsg.includes('presencial') || lastBotMsg.includes('hora')) {
-    return 'Excelente. Quedó registrado tu pedido para la consulta de 1 hora. Un abogado del estudio confirmará el turno libre a la brevedad. ¿Tenés alguna otra duda?';
+  if (lastBotMsg.includes('nombre') || lastBotMsg.includes('presencial') || lastBotMsg.includes('virtual')) {
+    return '¡Perfecto! Quedó anotado. ¿Qué día y horario te vendría bien para coordinar la cita?';
   }
 
-  if (msg.includes('horario') || msg.includes('atencion') || msg.includes('atención')) {
-    return 'Nuestro horario de atención es de L-V de 8 a 20hs. Cada turno dura 1 hora: Virtuales (8 a 20hs) y Presenciales (15 a 20hs, Viernes en oficina de Moyano 171, L-J a confirmar).';
+  if (msg.includes('horario') || msg.includes('atencion') || msg.includes('atención') || msg.includes('duracion') || msg.includes('duración') || msg.includes('cuanto dura')) {
+    return 'Nuestro horario de atención es de L-V de 8 a 20hs (consultas virtuales de 8 a 20hs y presenciales de 15 a 20hs). Cada turno tiene una duración de 1 hora.';
   }
 
-  return '¡Gracias por escribir a S&S Abogados! Ofrecemos turnos libres de 1 hora (Virtual 8-20hs / Presencial 15-20hs). ¿Me decís tu nombre completo y preferencia de día y hora?';
+  return '¡Gracias por escribir a S&S Abogados! Para agendar una consulta con el equipo, ¿me indicás tu nombre completo y motivo?';
 }
