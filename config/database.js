@@ -47,9 +47,14 @@ class Database {
   _read() {
     try {
       const data = fs.readFileSync(this.localFile, 'utf-8');
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      return {
+        settings: parsed.settings || initialData.settings,
+        appointments: Array.isArray(parsed.appointments) ? parsed.appointments : [],
+        chats: (parsed.chats && typeof parsed.chats === 'object') ? parsed.chats : {}
+      };
     } catch (e) {
-      return initialData;
+      return { ...initialData };
     }
   }
 
@@ -146,9 +151,12 @@ class Database {
 
     // Group chats by pushName or phone to consolidate LID duplicates
     Object.values(chatsMap).forEach(chat => {
+      if (!chat) return;
       const key = (chat.pushName && chat.pushName !== 'Cliente WhatsApp') 
         ? chat.pushName.toLowerCase().trim() 
         : chat.phone;
+
+      if (!key) return;
 
       if (!mergedChats[key]) {
         mergedChats[key] = { ...chat, messages: [...(chat.messages || [])] };
@@ -178,12 +186,13 @@ class Database {
 
   saveMessage(phone, pushName, sender, text, isUrgent = false) {
     const db = this._read();
+    if (!db.chats) db.chats = {};
     
     // Unify chat by pushName or phone to merge LID and phone JIDs
     let chatKey = phone;
     if (!db.chats[chatKey]) {
       const matchKey = Object.keys(db.chats).find(k => 
-        db.chats[k].pushName && pushName && 
+        db.chats[k] && db.chats[k].pushName && pushName && 
         db.chats[k].pushName.toLowerCase().trim() === pushName.toLowerCase().trim() && 
         pushName.toLowerCase() !== 'cliente whatsapp'
       );
@@ -227,7 +236,8 @@ class Database {
 
   toggleBotPause(phone, paused) {
     const db = this._read();
-    const chatKey = Object.keys(db.chats).find(k => k === phone || (db.chats[k].pushName && db.chats[k].pushName.toLowerCase() === phone.toLowerCase()));
+    if (!db.chats) db.chats = {};
+    const chatKey = Object.keys(db.chats).find(k => k === phone || (db.chats[k] && db.chats[k].pushName && db.chats[k].pushName.toLowerCase() === phone.toLowerCase()));
     if (chatKey && db.chats[chatKey]) {
       db.chats[chatKey].pausedBot = paused;
       this._write(db);
