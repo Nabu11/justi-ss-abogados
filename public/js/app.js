@@ -111,14 +111,14 @@ function switchTab(tabName) {
   });
 
   const titles = {
-    dashboard: 'Panel General',
-    appointments: 'Gestor de Turnos',
-    chats: 'Conversaciones WhatsApp',
-    analytics: 'Analíticas & Reportes',
-    simulator: 'Simulador de Justi',
-    settings: 'Configuración de Sistema'
+    dashboard: '¡Hola! Bienvenido al centro de control 👋',
+    appointments: '📅 Gestor de Turnos & Citas',
+    chats: '💬 Conversaciones de WhatsApp',
+    analytics: '📈 Reportes & Métricas',
+    simulator: '🤖 Probador Interactivo de Justi',
+    settings: '⚙️ Configuración del Sistema'
   };
-  document.getElementById('page-title').innerText = titles[tabName] || 'Panel General';
+  document.getElementById('page-title').innerText = titles[tabName] || '¡Hola! Bienvenido al centro de control 👋';
 
   if (tabName === 'analytics') {
     fetchAnalytics();
@@ -471,7 +471,7 @@ function renderDashboardTable() {
   tbody.innerHTML = '';
   const recent = state.appointments.slice(0, 5);
   if (recent.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#9ca3af;">No hay turnos agendados aún</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#9ca3af; padding:20px;">☀️ ¡Todo al día! No hay turnos agendados por ahora</td></tr>';
     return;
   }
 
@@ -507,7 +507,7 @@ function renderAppointmentsTable(filter = 'all', searchQuery = '') {
   }
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#9ca3af;">No se encontraron turnos con ese criterio</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#9ca3af; padding:20px;">☀️ No hay turnos registrados con ese criterio</td></tr>';
     return;
   }
 
@@ -517,7 +517,7 @@ function renderAppointmentsTable(filter = 'all', searchQuery = '') {
     tr.innerHTML = `
       <td><strong>${a.clientName}</strong><br><small style="color:#9ca3af;">DNI: ${a.dni || 'S/D'}</small></td>
       <td><strong>${a.area}</strong><br><small style="color:#9ca3af;">${a.description || ''}</small></td>
-      <td>${a.date}<br><small style="color:#d4af37;">${a.time} hs</small></td>
+      <td>${a.date}<br><small style="color:#eab308; font-weight:600;">${a.time} hs</small></td>
       <td>📱 ${a.phone}</td>
       <td>${a.isUrgent ? '<span class="badge badge-urgent">🚨 URGENTE</span>' : 'Normal'}</td>
       <td>${a.modality}</td>
@@ -558,7 +558,7 @@ function renderChatList() {
   container.innerHTML = '';
 
   if (state.chats.length === 0) {
-    container.innerHTML = '<div style="padding:20px; text-align:center; color:#9ca3af; font-size:13px;">No hay chats registrados aún</div>';
+    container.innerHTML = '<div style="padding:20px; text-align:center; color:#9ca3af; font-size:13px;">No hay conversaciones activas aún</div>';
     return;
   }
 
@@ -686,11 +686,11 @@ function handleWhatsAppStatus(status) {
   dot.className = `status-indicator-dot ${status}`;
 
   if (status === 'connected') {
-    text.innerText = 'Conectado a WhatsApp';
+    text.innerText = 'WhatsApp Conectado';
     sub.innerText = 'Justi respondiendo automáticamente';
     qrImg.style.display = 'none';
     qrPlace.style.display = 'flex';
-    qrPlace.innerHTML = '✅ <strong>WhatsApp Conectado Exitosamente</strong><p>Justi está lista y activa recibiendo mensajes.</p>';
+    qrPlace.innerHTML = '✅ <strong>WhatsApp Conectado Exitosamente</strong><p>Justi está atendiendo a tus clientes con amabilidad.</p>';
   } else if (status === 'qr_ready') {
     text.innerText = 'QR Pendiente';
     sub.innerText = 'Escaneá para iniciar sesión';

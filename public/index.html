@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Justi — Secretaria Virtual | S&S Abogados</title>
+  <title>Justi — Asistente Virtual | S&S Abogados</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
@@ -14,17 +14,25 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-logo">🏛️</div>
+        <div class="brand-avatar">⚖️</div>
         <div class="brand-text">
           <h2>S&S Abogados</h2>
-          <span class="sub-brand">Justi Virtual Bot</span>
+          <span class="sub-brand">Estudio Jurídico Moyano 171</span>
+        </div>
+      </div>
+
+      <div class="assistant-mini-card">
+        <div class="assistant-avatar">🤖</div>
+        <div class="assistant-info">
+          <strong>Justi Asistente</strong>
+          <span class="status-badge-online">● En línea</span>
         </div>
       </div>
 
       <nav class="nav-menu">
         <button class="nav-item active" data-tab="dashboard">
-          <span class="nav-icon">📊</span>
-          <span>Panel General</span>
+          <span class="nav-icon">🏠</span>
+          <span>Inicio & Resumen</span>
         </button>
         <button class="nav-item" data-tab="appointments">
           <span class="nav-icon">📅</span>
@@ -33,15 +41,15 @@
         </button>
         <button class="nav-item" data-tab="chats">
           <span class="nav-icon">💬</span>
-          <span>Chats WhatsApp</span>
+          <span>Conversaciones</span>
         </button>
         <button class="nav-item" data-tab="analytics">
           <span class="nav-icon">📈</span>
-          <span>Analíticas & Reportes</span>
+          <span>Reportes & Métricas</span>
         </button>
         <button class="nav-item" data-tab="simulator">
           <span class="nav-icon">🤖</span>
-          <span>Simulador de Justi</span>
+          <span>Probador de Justi</span>
         </button>
         <button class="nav-item" data-tab="settings">
           <span class="nav-icon">⚙️</span>
@@ -52,13 +60,13 @@
       <div class="whatsapp-status-card" id="wa-status-box">
         <div class="status-indicator-dot disconnected" id="wa-dot"></div>
         <div class="status-info">
-          <strong id="wa-status-text">Desconectado</strong>
-          <small id="wa-status-sub">Esperando escaneo QR</small>
+          <strong id="wa-status-text">WhatsApp Desconectado</strong>
+          <small id="wa-status-sub">Esperando escaneo de QR</small>
         </div>
       </div>
 
       <div style="margin-top: 16px;">
-        <button class="btn btn-outline" id="btn-logout" style="width: 100%; font-size: 12px; padding: 8px;">
+        <button class="btn btn-outline" id="btn-logout" style="width: 100%; font-size: 12px; padding: 10px; border-radius: 12px;">
           🚪 Cerrar Sesión
         </button>
       </div>
@@ -69,19 +77,30 @@
       <!-- Top Navbar -->
       <header class="top-header">
         <div class="header-title">
-          <h1 id="page-title">Panel General</h1>
+          <h1 id="page-title">¡Hola! Bienvenido al centro de control 👋</h1>
           <p class="header-subtitle">Capitán de Fragata Moyano 171, Piso 1, Mendoza, Argentina</p>
         </div>
         <div class="header-actions">
           <button class="btn btn-outline" id="btn-toggle-sound" title="Activar Sonido de Alertas">🔔 Sonido: ON</button>
           <button class="btn btn-outline" id="btn-export-csv" title="Exportar Citas a Excel/CSV">📊 Excel</button>
           <button class="btn btn-outline" id="btn-print-pdf" title="Imprimir Planilla o Guardar PDF">🖨️ PDF</button>
-          <button class="btn btn-primary" id="btn-new-apt">+ Nuevo Turno</button>
+          <button class="btn btn-primary" id="btn-new-apt">✨ Nuevo Turno</button>
         </div>
       </header>
 
       <!-- TAB 1: DASHBOARD -->
       <section class="tab-content active" id="tab-dashboard">
+        <!-- Friendly Welcome Banner -->
+        <div class="welcome-banner glass-card">
+          <div class="welcome-text">
+            <h2>¡Hola equipo de S&S Abogados! 👋</h2>
+            <p>Justi está atendiendo cordialmente las consultas por WhatsApp. Podés revisar los turnos confirmados y las consultas urgentes en tiempo real.</p>
+          </div>
+          <div class="welcome-badge">
+            <span>✨ Asistente Operativo 24/7</span>
+          </div>
+        </div>
+
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon">📅</div>
@@ -96,12 +115,12 @@
           <div class="stat-card">
             <div class="stat-icon">💬</div>
             <div class="stat-value" id="stat-active-chats">0</div>
-            <div class="stat-label">Chats Activos</div>
+            <div class="stat-label">Conversaciones Activas</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">⚡</div>
-            <div class="stat-value" id="stat-bot-engine">Groq LLM</div>
-            <div class="stat-label">Motor Activo</div>
+            <div class="stat-value" id="stat-bot-engine">Llama 3.3 70B</div>
+            <div class="stat-label">Motor de Inteligencia</div>
           </div>
         </div>
 
@@ -128,7 +147,7 @@
           <div class="card glass-card">
             <div class="card-header">
               <h3>📋 Próximos Turnos Agendados</h3>
-              <button class="btn btn-sm btn-link" onclick="switchTab('appointments')">Ver todos →</button>
+              <button class="btn btn-sm btn-link" onclick="switchTab('appointments')">Ver todos los turnos →</button>
             </div>
             <div class="card-body">
               <div class="table-responsive">
@@ -157,13 +176,13 @@
         <div class="card glass-card">
           <div class="card-header">
             <div class="filter-group">
-              <button class="btn-filter active" data-filter="all">Todos</button>
+              <button class="btn-filter active" data-filter="all">Todos los turnos</button>
               <button class="btn-filter" data-filter="pendiente">Pendientes</button>
               <button class="btn-filter" data-filter="confirmado">Confirmados</button>
               <button class="btn-filter" data-filter="atendido">Atendidos</button>
               <button class="btn-filter" data-filter="cancelado">Cancelados</button>
             </div>
-            <input type="text" id="search-apts" class="input-search" placeholder="🔍 Buscar cliente, DNI o teléfono...">
+            <input type="text" id="search-apts" class="input-search" placeholder="🔍 Buscar por cliente, DNI o teléfono...">
           </div>
           <div class="card-body">
             <div class="table-responsive">
@@ -174,7 +193,7 @@
                     <th>Área / Descripción</th>
                     <th>Fecha & Hora</th>
                     <th>Contacto</th>
-                    <th>Urgencia</th>
+                    <th>Prioridad</th>
                     <th>Modalidad</th>
                     <th>Estado</th>
                     <th>Acciones</th>
@@ -195,7 +214,7 @@
           <!-- Chat List -->
           <div class="chat-list-panel glass-card">
             <div class="panel-header">
-              <h3>Conversaciones</h3>
+              <h3>💬 Conversaciones WhatsApp</h3>
             </div>
             <div class="chat-items-container" id="chat-items-list">
               <!-- Injected by JS -->
@@ -216,7 +235,7 @@
             <div class="messages-container" id="messages-container">
               <div class="empty-state">
                 <span>💬</span>
-                <p>Seleccioná un chat de la izquierda para ver el historial y responder manualmente.</p>
+                <p>Seleccioná un chat de la izquierda para ver el historial y responder cordialmente.</p>
               </div>
             </div>
 
@@ -230,7 +249,7 @@
             </div>
 
             <div class="chat-input-box">
-              <input type="text" id="input-manual-msg" placeholder="Escribí un mensaje directo por WhatsApp..." disabled>
+              <input type="text" id="input-manual-msg" placeholder="Escribí un mensaje amable por WhatsApp..." disabled>
               <button class="btn btn-primary" id="btn-send-manual" disabled>Enviar</button>
             </div>
           </div>
@@ -265,8 +284,8 @@
         <div class="simulator-layout glass-card">
           <div class="simulator-header">
             <div>
-              <h3>🤖 Simulador Interactivo de Justi</h3>
-              <p>Probá las respuestas y el flujo de recolección de datos de Justi antes de enviar mensajes reales por WhatsApp.</p>
+              <h3>🤖 Probador Interactivo de Justi</h3>
+              <p>Hacé pruebas y simulá la interacción con Justi antes de enviar mensajes por WhatsApp.</p>
             </div>
             <button class="btn btn-sm btn-outline" id="btn-reset-sim">🔄 Reiniciar Chat</button>
           </div>
@@ -274,8 +293,8 @@
             <!-- Simulated messages injected here -->
           </div>
           <div class="sim-input-box">
-            <input type="text" id="input-sim-msg" placeholder="Escribí como si fueras un cliente del estudio jurídico...">
-            <button class="btn btn-gold" id="btn-send-sim">Enviar a Justi 🚀</button>
+            <input type="text" id="input-sim-msg" placeholder="Escribí un mensaje de prueba como si fueras un cliente...">
+            <button class="btn btn-gold" id="btn-send-sim">Enviar a Justi ✨</button>
           </div>
         </div>
       </section>
@@ -354,13 +373,13 @@
   <div class="modal-backdrop" id="modal-apt" style="display:none;">
     <div class="modal-card glass-card">
       <div class="modal-header">
-        <h3>➕ Agendar Nuevo Turno</h3>
+        <h3>✨ Agendar Nuevo Turno</h3>
         <button class="btn-close" id="btn-close-modal">✕</button>
       </div>
       <form id="form-new-apt">
         <div class="form-group">
           <label>Nombre y Apellido del Cliente</label>
-          <input type="text" id="apt-name" class="form-control" required placeholder="Ej: Juan Pérez">
+          <input type="text" id="apt-name" class="form-control" required placeholder="Ej: María Fernández">
         </div>
         <div class="form-group">
           <label>DNI (Opcional)</label>
