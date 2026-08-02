@@ -194,6 +194,25 @@ END:VCALENDAR`;
     return sendJSON({ error: 'No autorizado. Iniciá sesión.' }, 401);
   }
 
+  if (pathname === '/api/documents' && method === 'GET') {
+    try {
+      const files = fs.readdirSync(UPLOADS_DIR);
+      const docs = files.map(filename => {
+        const stat = fs.statSync(path.join(UPLOADS_DIR, filename));
+        return {
+          filename,
+          url: `/uploads/${filename}`,
+          size: (stat.size / 1024).toFixed(1) + ' KB',
+          date: stat.mtime.toISOString()
+        };
+      }).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      return sendJSON(docs);
+    } catch (e) {
+      return sendJSON([]);
+    }
+  }
+
   if (pathname === '/api/analytics' && method === 'GET') {
     const apts = db.getAppointments();
     const areaBreakdown = {};

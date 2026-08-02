@@ -3,6 +3,7 @@ let state = {
   currentTab: 'dashboard',
   appointments: [],
   chats: [],
+  documents: [],
   activeChatPhone: null,
   simMessages: [
     { sender: 'bot', text: '¡Hola! Soy Justi, secretaria virtual de S&S Abogados. 👋 ¿En qué podemos ayudarte hoy?', timestamp: new Date().toISOString() }
@@ -114,6 +115,7 @@ function switchTab(tabName) {
     dashboard: '¡Hola! Bienvenido al centro de control 👋',
     appointments: '📅 Gestor de Turnos & Citas',
     chats: '💬 Conversaciones de WhatsApp',
+    documents: '📂 Galería de Documentos Recibidos',
     analytics: '📈 Reportes & Métricas',
     simulator: '🤖 Probador Interactivo de Justi (Simulador WhatsApp)',
     settings: '⚙️ Configuración del Sistema'
@@ -122,6 +124,8 @@ function switchTab(tabName) {
 
   if (tabName === 'analytics') {
     fetchAnalytics();
+  } else if (tabName === 'documents') {
+    fetchDocuments();
   }
 }
 
@@ -250,6 +254,42 @@ function setupEvents() {
       body: JSON.stringify({ groqApiKey, model, autoRemindersEnabled })
     });
     alert('Ajustes guardados correctamente ✅');
+  });
+}
+
+// Fetch Received Documents
+async function fetchDocuments() {
+  try {
+    const res = await authFetch('/api/documents');
+    if (!res) return;
+    state.documents = await res.json();
+    renderDocumentsTable();
+  } catch (err) {
+    console.error('Error cargando documentos:', err);
+  }
+}
+
+function renderDocumentsTable() {
+  const tbody = document.getElementById('documents-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (state.documents.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#9ca3af; padding:20px;">📂 No se han recibido adjuntos o PDFs por WhatsApp aún</td></tr>';
+    return;
+  }
+
+  state.documents.forEach(doc => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>📄 ${doc.filename}</strong></td>
+      <td>${doc.size}</td>
+      <td>${new Date(doc.date).toLocaleString()}</td>
+      <td>
+        <a href="${doc.url}" target="_blank" class="btn-icon">📥 Ver / Descargar Documento</a>
+      </td>
+    `;
+    tbody.appendChild(tr);
   });
 }
 

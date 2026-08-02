@@ -40,6 +40,9 @@
         <button class="nav-item" data-tab="chats">
           <span class="nav-icon">💬</span> Chats WhatsApp
         </button>
+        <button class="nav-item" data-tab="documents">
+          <span class="nav-icon">📂</span> Archivos Recibidos
+        </button>
         <button class="nav-item" data-tab="analytics">
           <span class="nav-icon">📈</span> Reportes & Métricas
         </button>
@@ -246,7 +249,34 @@
         </div>
       </section>
 
-      <!-- TAB 4: ANALYTICS -->
+      <!-- TAB 4: DOCUMENTS -->
+      <section class="tab-content" id="tab-documents">
+        <div class="card glass-card">
+          <div class="card-header">
+            <h3>📂 Galería de Documentos Recibidos por WhatsApp</h3>
+            <button class="btn btn-sm btn-outline" onclick="fetchDocuments()">🔄 Actualizar Archivos</button>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table" id="table-documents">
+                <thead>
+                  <tr>
+                    <th>Archivo / Nombre</th>
+                    <th>Tamaño</th>
+                    <th>Fecha de Recepción</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="documents-tbody">
+                  <!-- Injected by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: ANALYTICS -->
       <section class="tab-content" id="tab-analytics">
         <div class="settings-grid">
           <div class="card glass-card">
@@ -269,7 +299,7 @@
         </div>
       </section>
 
-      <!-- TAB 5: SIMULATOR REDESIGN -->
+      <!-- TAB 6: SIMULATOR -->
       <section class="tab-content" id="tab-simulator">
         <div class="simulator-wrapper">
           <!-- Left Panel: Preset Test Scenarios -->
@@ -353,7 +383,7 @@
         </div>
       </section>
 
-      <!-- TAB 6: SETTINGS -->
+      <!-- TAB 7: SETTINGS -->
       <section class="tab-content" id="tab-settings">
         <div class="settings-grid">
           <div class="card glass-card">
