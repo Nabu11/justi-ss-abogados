@@ -598,22 +598,61 @@ function selectChat(phone) {
 function renderMessages(messages) {
   const container = document.getElementById('messages-container');
   container.innerHTML = '';
-  messages.forEach(m => {
-    const bubble = document.createElement('div');
-    bubble.className = `message-bubble ${m.sender}`;
 
-    // Render text with media links if present
+  if (messages.length === 0) {
+    container.innerHTML = '<div class="empty-state"><span>💬</span><p>No hay mensajes en esta conversación.</p></div>';
+    return;
+  }
+
+  messages.forEach(m => {
+    const row = document.createElement('div');
+    let senderType = m.sender; // 'client', 'bot', 'admin'
+    row.className = `message-row ${senderType}`;
+
+    let senderTagHtml = '';
+    if (senderType === 'client') {
+      senderTagHtml = '👤 Cliente';
+    } else if (senderType === 'bot') {
+      senderTagHtml = '🤖 Justi (IA)';
+    } else {
+      senderTagHtml = '👨‍⚖️ Estudio S&S (Respuesta Manual / Celular)';
+    }
+
+    const timeStr = m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+
+    let contentHtml = '';
     if (m.text && m.text.includes('[Archivo Adjunto:')) {
       const parts = m.text.split('[Archivo Adjunto:');
       const mediaPath = parts[1].replace(']', '').trim();
-      bubble.innerHTML = `${parts[0]}<br><a href="${mediaPath}" target="_blank" style="color:var(--accent-gold); font-weight:600; text-decoration:underline;">📎 Ver Archivo Adjunto Recibido</a>`;
+      contentHtml = `${parts[0]}<br><a href="${mediaPath}" target="_blank" style="color:var(--accent-gold); font-weight:600; text-decoration:underline;">📎 Ver Archivo Adjunto Recibido</a>`;
     } else {
-      bubble.innerText = m.text;
+      contentHtml = escapeHTML(m.text || '');
     }
 
-    container.appendChild(bubble);
+    row.innerHTML = `
+      <div class="message-sender-tag">${senderTagHtml}</div>
+      <div class="message-bubble-card">
+        ${contentHtml}
+        <span class="message-time">${timeStr}</span>
+      </div>
+    `;
+
+    container.appendChild(row);
   });
+
   container.scrollTop = container.scrollHeight;
+}
+
+function escapeHTML(str) {
+  return str.replace(/[&<>'"]/g, 
+    tag => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[tag] || tag)
+  );
 }
 
 async function toggleBotPause(phone, paused) {
@@ -657,10 +696,22 @@ function renderSimulator() {
   const container = document.getElementById('sim-timeline');
   container.innerHTML = '';
   state.simMessages.forEach(m => {
-    const bubble = document.createElement('div');
-    bubble.className = `message-bubble ${m.sender}`;
-    bubble.innerText = m.text;
-    container.appendChild(bubble);
+    const row = document.createElement('div');
+    let senderType = m.sender;
+    row.className = `message-row ${senderType}`;
+
+    let senderTagHtml = senderType === 'client' ? '👤 Cliente (Tú)' : '🤖 Justi (IA)';
+    const timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+    row.innerHTML = `
+      <div class="message-sender-tag">${senderTagHtml}</div>
+      <div class="message-bubble-card">
+        ${escapeHTML(m.text || '')}
+        <span class="message-time">${timeStr}</span>
+      </div>
+    `;
+
+    container.appendChild(row);
   });
   container.scrollTop = container.scrollHeight;
 }
