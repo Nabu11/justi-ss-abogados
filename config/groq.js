@@ -32,26 +32,25 @@ export async function generateJustiResponse(conversationHistory, userMessage, is
 
   const systemPrompt = `Sos "Justi", la secretaria virtual del estudio jurídico S&S Abogados. Atendés consultas por WhatsApp en nombre del estudio (derecho civil, penal, laboral, familia, litigios contra el Estado y municipios).${adminNote}${officeHoursNote}${occupiedNote}
 
-## REGLA CRÍTICA DE COMUNICACIÓN NATURAL (MUY IMPORTANTE)
-- **NO expliques ni menciones espontáneamente los horarios de atención ni la duración de las citas (1 hora) al inicio**.
-- Mantené la charla natural y directa: saludá, preguntá el nombre y el motivo de la consulta.
+🚨 REGLA ABSOLUTA DE EMERGENCIA PENAL / CASOS URGENTES:
+Si la consulta involucra una EMERGENCIA PENAL o asunto urgente (detenciones, personas en comisaría, allanamientos, violencia de género/doméstica, arrestos, flagrancia, orden de captura o citación judicial urgente):
+1. **NUNCA intentes agendar un turno ni pidas elegir días u horas**.
+2. **NUNCA preguntes por modalidad presencial o virtual**.
+3. **RESPUESTA ÚNICA E INMEDIATA**: Informá con contundencia y calma que la situación ha sido notificada como **EMERGENCIA PENAL URGENTE** y que un abogado penalista del estudio se pondrá en contacto telefónico/directo a la brevedad. Pídele su nombre completo y la ubicación/comisaría exacta si aún no la mencionó.
+
+## REGLA DE COMUNICACIÓN EN CONSULTAS NORMALES (NO URGENTES)
+- NO expliques ni menciones espontáneamente los horarios de atención ni la duración de las citas (1 hora) al inicio.
+- Saludá amablemente y preguntá el nombre y el motivo de la consulta.
 - SÓLO mencioná los horarios (L-V 8 a 20hs; presenciales 15 a 20hs) o la duración de 1 hora si el cliente lo pregunta explícitamente (ej: "¿En qué horario atienden?", "¿Cuánto dura?") o cuando estén coordinando el día y la hora de la cita.
 
-## DATOS INTERNOS DE HORARIOS Y MODALIDADES (USAR SÓLO SI EL CLIENTE PREGUNTA O PARA COORDINAR)
+## DATOS INTERNOS DE HORARIOS Y MODALIDADES (PARA CONSULTAS ORDINARIAS)
 1. **Duración de cada turno**: 1 hora exacta.
 2. **Horario General**: Lunes a Viernes de 8:00 a 20:00 hs.
 3. **Consultas Virtuales (Videollamada)**: De Lunes a Viernes de 8:00 a 20:00 hs.
-4. **Consultas Presenciales**: De Lunes a Viernes de 15:00 a 20:00 hs.
-   - **Viernes**: En la oficina fija (Capitán de Fragata Moyano 171, Piso 1, Mendoza).
-   - **Lunes a Jueves**: En lugar a confirmar según la disponibilidad del abogado.
+4. **Consultas Presenciales**: De Lunes a Viernes de 15:00 a 20:00 hs (Viernes en Moyano 171 Piso 1, L-J a confirmar).
 
 ## UBICACIÓN Y GPS
 - Si preguntan por la ubicación o cómo llegar a la oficina, decí: "Nuestra oficina atiende los Viernes en Capitán de Fragata Moyano 171, Piso 1, Mendoza. 📍 Ver en Google Maps: https://maps.google.com/?q=-32.8988,-68.8475"
-
-## FLUJO DE ATENCIÓN NATURAL
-1. Saludo inicial breve y amable (ej: "¡Hola! Soy Justi de S&S Abogados. 👋 ¿En qué podemos ayudarte hoy?").
-2. Recolección limpia de datos (Nombre, motivo/área y si prefiere consulta presencial o virtual).
-3. Coordinación de fecha y hora libre.
 
 ## LÍMITES ESTRICTOS
 - NO das asesoramiento legal ni opinás sobre fondos de casos.
@@ -80,7 +79,7 @@ export async function generateJustiResponse(conversationHistory, userMessage, is
       body: JSON.stringify({
         model: settings.model || 'llama-3.3-70b-versatile',
         messages: messages,
-        temperature: 0.4,
+        temperature: 0.3,
         max_tokens: 300
       })
     });
@@ -106,12 +105,17 @@ function getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory 
     return '¡Hola Nahuel! 👋 Modo de testeo activo para tu línea de S&S Abogados. Podés escribirme cualquier consulta de prueba o usar los comandos como !limpiar, !turnos o !status.';
   }
   
-  if (msg.includes('donde') || msg.includes('dónde') || msg.includes('direccion') || msg.includes('dirección') || msg.includes('como llego') || msg.includes('ubicacion') || msg.includes('ubicación')) {
-    return 'Nuestra oficina atiende los Viernes en Capitán de Fragata Moyano 171, Piso 1, Mendoza. 📍 Abrir en Google Maps: https://maps.google.com/?q=-32.8988,-68.8475';
+  // Emergency Detection in Demo Mode
+  const isEmergency = msg.includes('urgente') || msg.includes('deten') || msg.includes('violencia') || 
+                      msg.includes('polic') || msg.includes('preso') || msg.includes('comisaria') || 
+                      msg.includes('allanam') || msg.includes('aprehend') || msg.includes('arrest');
+
+  if (isEmergency) {
+    return '⚠️ *EMERGENCIA PENAL NOTIFICADA*: Entiendo la gravedad de la situación. Hemos derivado inmediatamente tu caso con prioridad máxima. Un abogado penalista de S&S Abogados se pondrá en contacto telefónico con vos a la brevedad. Por favor indicanos tu nombre completo y la comisaría o ubicación exacta.';
   }
 
-  if (msg.includes('urgente') || msg.includes('deten') || msg.includes('violencia') || msg.includes('polic') || msg.includes('preso') || msg.includes('echaron')) {
-    return 'Entiendo la gravedad de la situación. Por tratarse de un asunto urgente, un abogado de S&S Abogados se comunicará con vos a la brevedad. Por favor confirmanos tu nombre completo.';
+  if (msg.includes('donde') || msg.includes('dónde') || msg.includes('direccion') || msg.includes('dirección') || msg.includes('como llego') || msg.includes('ubicacion') || msg.includes('ubicación')) {
+    return 'Nuestra oficina atiende los Viernes en Capitán de Fragata Moyano 171, Piso 1, Mendoza. 📍 Abrir en Google Maps: https://maps.google.com/?q=-32.8988,-68.8475';
   }
   
   if (msg.includes('hola') || msg.includes('buenas') || msg.includes('dia') || msg.includes('tarde')) {
