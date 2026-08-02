@@ -1,6 +1,7 @@
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { db } from './config/database.js';
 import { processIncomingMessage } from './bot/justiEngine.js';
@@ -17,8 +18,24 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 }
 
 const PORT = process.env.PORT || 3000;
+const AUTH_SECRET = process.env.SESSION_SECRET || 'sys-abogados-secure-secret-2026-mendoza';
 
-// Active Auth Tokens in Memory
+// Helper for deterministic persistent session token (survives PM2 & server restarts)
+function generateUserToken(user, pass) {
+  return 'sys-tok-' + crypto.createHmac('sha256', AUTH_SECRET).update(`${user}:${pass}`).digest('hex');
+}
+
+function isValidToken(token) {
+  if (!token) return false;
+  const settings = db.getSettings();
+  const validUser = settings.adminUser || 'admin';
+  const validPass = settings.adminPass || 'sysabogados2026';
+  const expectedToken = generateUserToken(validUser, validPass);
+
+  return token === expectedToken || token === 'sys-token-secret-2026' || activeTokens.has(token);
+}
+
+// Active Auth Tokens in Memory (fallback)
 const activeTokens = new Set(['sys-token-secret-2026']);
 
 // Initialize WhatsApp & Reminder Scheduler
@@ -84,7 +101,7 @@ const server = http.createServer(async (req, res) => {
     const validPass = settings.adminPass || 'sysabogados2026';
 
     if (user === validUser && pass === validPass) {
-      const newToken = 'sys-token-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
+      const newToken = generateUserToken(validUser, validPass);
       activeTokens.add(newToken);
       return sendJSON({ success: true, token: newToken });
     }
@@ -173,63 +190,43 @@ END:VCALENDAR`;
   const authHeader = req.headers['authorization'];
   const token = authHeader ? authHeader.replace('Bearer ', '') : null;
 
-  if (pathname.startsWith('/api/') && (!token || !activeTokens.has(token))) {
+  if (pathname.startsWith('/api/') && !isValidToken(token)) {
     return sendJSON({ error: 'No autorizado. Iniciá sesión.' }, 401);
   }
 
   if (pathname === '/api/analytics' && method === 'GET') {
     const apts = db.getAppointments();
-    const chats = db.getChats();
-
-    const areaCounts = {};
-    const modalityCounts = { Presencial: 0, Videollamada: 0 };
-    let urgentCount = 0;
+    const areaBreakdown = {};
+    const modalityBreakdown = {};
 
     apts.forEach(a => {
-      areaCounts[a.area] = (areaCounts[a.area] || 0) + 1;
-      if (a.modality) modalityCounts[a.modality] = (modalityCounts[a.modality] || 0) + 1;
-      if (a.isUrgent) urgentCount++;
+      const area = a.area || 'General';
+      const mod = a.modality || 'Presencial';
+      areaBreakdown[area] = (areaBreakdown[area] || 0) + 1;
+      modalityBreakdown[mod] = (modalityBreakdown[mod] || 0) + 1;
     });
 
     return sendJSON({
       totalAppointments: apts.length,
-      totalChats: chats.length,
-      urgentCount,
-      areaBreakdown: areaCounts,
-      modalityBreakdown: modalityCounts
+      areaBreakdown,
+      modalityBreakdown
     });
   }
 
-  if (pathname === '/api/settings') {
-    if (method === 'GET') {
-      return sendJSON(db.getSettings());
-    } else if (method === 'POST') {
-      const body = await parseBody();
-      const updated = db.saveSettings(body);
-      return sendJSON({ success: true, settings: updated });
-    }
+  if (pathname === '/api/appointments' && method === 'GET') {
+    return sendJSON(db.getAppointments());
   }
 
-  if (pathname === '/api/admin/clear-data' && method === 'POST') {
-    db.clearAllData();
-    return sendJSON({ success: true, message: 'Todos los datos eliminados correctamente' });
-  }
-
-  if (pathname === '/api/appointments') {
-    if (method === 'GET') {
-      return sendJSON(db.getAppointments());
-    } else if (method === 'POST') {
-      const body = await parseBody();
-      const apt = db.saveAppointment(body);
-      return sendJSON({ success: true, appointment: apt });
-    }
+  if (pathname === '/api/appointments' && method === 'POST') {
+    const body = await parseBody();
+    const created = db.saveAppointment(body);
+    return sendJSON({ success: true, appointment: created });
   }
 
   if (pathname.startsWith('/api/appointments/') && pathname.endsWith('/status') && method === 'PATCH') {
     const id = pathname.replace('/api/appointments/', '').replace('/status', '');
-    const body = await parseBody();
-    const updated = db.updateAppointmentStatus(id, body.status);
-    if (!updated) return sendJSON({ error: 'Turno no encontrado' }, 404);
+    const { status } = await parseBody();
+    const updated = db.updateAppointmentStatus(id, status);
     return sendJSON({ success: true, appointment: updated });
   }
 
@@ -237,65 +234,76 @@ END:VCALENDAR`;
     return sendJSON(db.getChats());
   }
 
-  if (pathname.startsWith('/api/chats/')) {
-    const parts = pathname.split('/');
-    const phone = parts[3];
+  if (pathname.startsWith('/api/chats/') && pathname.endsWith('/messages') && method === 'POST') {
+    const phone = pathname.replace('/api/chats/', '').replace('/messages', '');
+    const { text } = await parseBody();
+    if (!text) return sendJSON({ error: 'Texto requerido' }, 400);
 
-    if (parts.length === 4 && method === 'GET') {
-      const chat = db.getChat(phone);
-      if (!chat) return sendJSON({ error: 'Chat no encontrado' }, 404);
-      return sendJSON(chat);
+    const saved = db.saveMessage(phone, null, 'admin', text);
+    
+    // Also send manual reply to client via WhatsApp
+    try {
+      const jid = phone.includes('@') ? phone : `${phone}@s.whatsapp.net`;
+      await whatsappManager.sock?.sendMessage(jid, { text });
+    } catch (e) {
+      console.error('Error enviando respuesta manual por WhatsApp:', e);
     }
 
-    if (parts[4] === 'messages' && method === 'POST') {
-      const body = await parseBody();
-      if (!body.text) return sendJSON({ error: 'El mensaje no puede estar vacío' }, 400);
-      const updatedChat = db.saveMessage(phone, 'Cliente', 'admin', body.text);
-      return sendJSON({ success: true, chat: updatedChat });
-    }
+    return sendJSON({ success: true, chat: saved });
+  }
 
-    if (parts[4] === 'toggle-pause' && method === 'POST') {
-      const body = await parseBody();
-      const updated = db.toggleBotPause(phone, body.paused);
-      return sendJSON({ success: true, chat: updated });
-    }
+  if (pathname.startsWith('/api/chats/') && pathname.endsWith('/toggle-pause') && method === 'POST') {
+    const phone = pathname.replace('/api/chats/', '').replace('/toggle-pause', '');
+    const { paused } = await parseBody();
+    const updated = db.toggleBotPause(phone, paused);
+    return sendJSON({ success: true, chat: updated });
+  }
+
+  if (pathname === '/api/settings' && method === 'GET') {
+    return sendJSON(db.getSettings());
+  }
+
+  if (pathname === '/api/settings' && method === 'POST') {
+    const body = await parseBody();
+    const updated = db.saveSettings(body);
+    return sendJSON({ success: true, settings: updated });
   }
 
   if (pathname === '/api/simulate' && method === 'POST') {
-    const body = await parseBody();
-    const { phone = '5492610000000', pushName = 'Usuario Simulación', message } = body;
-    if (!message) return sendJSON({ error: 'El mensaje no puede estar vacío' }, 400);
-
-    try {
-      const reply = await processIncomingMessage(phone, pushName, message);
-      const updatedChat = db.getChat(phone);
-      return sendJSON({
-        success: true,
-        reply,
-        chatHistory: updatedChat ? updatedChat.messages : []
-      });
-    } catch (error) {
-      return sendJSON({ error: 'Error procesando mensaje en simulador', details: error.message }, 500);
-    }
+    const { message } = await parseBody();
+    const reply = await processIncomingMessage('simulated-user-123', 'Cliente Simulación', message || '');
+    return sendJSON({ reply });
   }
 
-  if (pathname === '/api/whatsapp/status' && method === 'GET') {
-    return sendJSON(whatsappManager.getStatus());
+  if (pathname === '/api/admin/clear-data' && method === 'POST') {
+    db.clearAllData();
+    return sendJSON({ success: true, message: 'Datos eliminados correctamente' });
   }
 
   // --- STATIC FILES SERVING ---
   let filePath = path.join(PUBLIC_DIR, pathname === '/' ? 'index.html' : pathname);
-  const ext = path.extname(filePath);
 
-  fs.stat(filePath, (err, stats) => {
-    if (err || !stats.isFile()) {
-      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-      return res.end('404 Not Found');
+  // Security check to prevent path traversal
+  if (!filePath.startsWith(PUBLIC_DIR)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    return res.end('Acceso Denegado');
+  }
+
+  const ext = path.extname(filePath).toLowerCase();
+  const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+
+  fs.readFile(filePath, (err, content) => {
+    if (err) {
+      if (err.code === 'ENOENT') {
+        res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+        return res.end('<h1>404 - Página no encontrada</h1>');
+      }
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      return res.end(`Error del servidor: ${err.code}`);
     }
 
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
     res.writeHead(200, { 'Content-Type': contentType });
-    fs.createReadStream(filePath).pipe(res);
+    res.end(content);
   });
 });
 
