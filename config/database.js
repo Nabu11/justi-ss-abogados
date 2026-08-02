@@ -78,7 +78,19 @@ class Database {
 
   saveSettings(newSettings) {
     const db = this._read();
-    db.settings = { ...db.settings, ...newSettings };
+    const currentSettings = db.settings || initialData.settings;
+    
+    // Only update groqApiKey if a new non-empty value is provided
+    const groqApiKey = (newSettings.groqApiKey && newSettings.groqApiKey.trim() !== '')
+      ? newSettings.groqApiKey.trim()
+      : currentSettings.groqApiKey;
+
+    db.settings = { 
+      ...currentSettings, 
+      ...newSettings,
+      groqApiKey
+    };
+
     this._write(db);
     return db.settings;
   }
