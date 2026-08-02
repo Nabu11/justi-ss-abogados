@@ -16,6 +16,9 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 
 export const whatsappEmitter = new EventEmitter();
 
+// Deduplication set for processed message IDs
+const processedMsgIds = new Set();
+
 class WhatsAppManager {
   constructor() {
     this.status = 'disconnected'; // 'disconnected', 'qr_ready', 'connected'
@@ -30,7 +33,7 @@ class WhatsAppManager {
 
       this.sock = makeWASocket({
         auth: state,
-        printQRInTerminal: true
+        printQRInTerminal: false
       });
 
       this.sock.ev.on('creds.update', saveCreds);
@@ -71,40 +74,55 @@ class WhatsAppManager {
       // Handle Incoming WhatsApp Messages & Media Attachments
       this.sock.ev.on('messages.upsert', async (m) => {
         if (m.type !== 'notify') return;
+
         for (const msg of m.messages) {
-          if (!msg.key.fromMe && msg.message) {
-            const senderJid = msg.key.remoteJid;
-            const phone = senderJid.replace('@s.whatsapp.net', '');
-            const pushName = msg.pushName || 'Cliente WhatsApp';
+          if (!msg.key || msg.key.fromMe || !msg.message) continue;
 
-            let conversationText = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
-            const isMedia = msg.message.imageMessage || msg.message.documentMessage || msg.message.videoMessage;
+          // 1. Deduplication Check by Message ID
+          const msgId = msg.key.id;
+          if (msgId && processedMsgIds.has(msgId)) {
+            continue;
+          }
+          if (msgId) processedMsgIds.add(msgId);
 
-            // Handle Media Attachment Download
-            if (isMedia) {
-              try {
-                const buffer = await downloadMediaMessage(msg, 'buffer', {});
-                const ext = msg.message.imageMessage ? '.jpg' : msg.message.documentMessage ? '.pdf' : '.bin';
-                const filename = `doc-${Date.now()}-${Math.random().toString(36).substring(2, 6)}${ext}`;
-                const filepath = path.join(UPLOADS_DIR, filename);
-                fs.writeFileSync(filepath, buffer);
-                const mediaUrl = `/uploads/${filename}`;
-                console.log(`📁 Adjunto descargado de ${pushName}: ${mediaUrl}`);
-                
-                conversationText += ` [Archivo Adjunto: ${mediaUrl}]`;
-              } catch (mediaErr) {
-                console.error('Error descargando adjunto de WhatsApp:', mediaErr.message);
-              }
+          // 2. Ignore Historical Messages (Received during initial WhatsApp sync > 60 seconds old)
+          const msgTimestamp = (msg.messageTimestamp || 0) * 1000;
+          if (msgTimestamp > 0 && (Date.now() - msgTimestamp > 60000)) {
+            console.log(`⏳ Ignorando mensaje antiguo del historial (timestamp: ${new Date(msgTimestamp).toLocaleTimeString()})`);
+            continue;
+          }
+
+          const senderJid = msg.key.remoteJid;
+          const phone = senderJid.split('@')[0];
+          const pushName = msg.pushName || 'Cliente WhatsApp';
+
+          let conversationText = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
+          const isMedia = msg.message.imageMessage || msg.message.documentMessage || msg.message.videoMessage;
+
+          // Handle Media Attachment Download
+          if (isMedia) {
+            try {
+              const buffer = await downloadMediaMessage(msg, 'buffer', {});
+              const ext = msg.message.imageMessage ? '.jpg' : msg.message.documentMessage ? '.pdf' : '.bin';
+              const filename = `doc-${Date.now()}-${Math.random().toString(36).substring(2, 6)}${ext}`;
+              const filepath = path.join(UPLOADS_DIR, filename);
+              fs.writeFileSync(filepath, buffer);
+              const mediaUrl = `/uploads/${filename}`;
+              console.log(`📁 Adjunto descargado de ${pushName}: ${mediaUrl}`);
+              
+              conversationText += ` [Archivo Adjunto: ${mediaUrl}]`;
+            } catch (mediaErr) {
+              console.error('Error descargando adjunto de WhatsApp:', mediaErr.message);
             }
+          }
 
-            if (conversationText) {
-              console.log(`📩 Mensaje recibido de ${pushName} (${phone}): "${conversationText}"`);
-              const botReply = await processIncomingMessage(phone, pushName, conversationText);
+          if (conversationText) {
+            console.log(`📩 Mensaje recibido de ${pushName} (${phone}): "${conversationText}"`);
+            const botReply = await processIncomingMessage(phone, pushName, conversationText);
 
-              if (botReply) {
-                console.log(`🤖 Justi responde a ${pushName}: "${botReply}"`);
-                await this.sock.sendMessage(senderJid, { text: botReply });
-              }
+            if (botReply) {
+              console.log(`🤖 Justi responde a ${pushName}: "${botReply}"`);
+              await this.sock.sendMessage(senderJid, { text: botReply });
             }
           }
         }
