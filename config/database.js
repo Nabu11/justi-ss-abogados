@@ -173,6 +173,7 @@ class Database {
           target.lastMessageTime = lastMsgObj.timestamp;
         }
         if (chat.isUrgent) target.isUrgent = true;
+        if (chat.pausedBot) target.pausedBot = true;
       }
     });
 
@@ -210,6 +211,7 @@ class Database {
         unreadCount: sender === 'client' ? 1 : 0,
         isUrgent: isUrgent,
         pausedBot: false,
+        inactivityAlertSent: false,
         messages: []
       };
     }
@@ -220,6 +222,7 @@ class Database {
     }
     chat.lastMessage = text;
     chat.lastMessageTime = new Date().toISOString();
+    chat.inactivityAlertSent = false; // Reset alert flag on new message
     if (isUrgent) chat.isUrgent = true;
     if (sender === 'client') chat.unreadCount = (chat.unreadCount || 0) + 1;
 
@@ -240,6 +243,19 @@ class Database {
     const chatKey = Object.keys(db.chats).find(k => k === phone || (db.chats[k] && db.chats[k].pushName && db.chats[k].pushName.toLowerCase() === phone.toLowerCase()));
     if (chatKey && db.chats[chatKey]) {
       db.chats[chatKey].pausedBot = paused;
+      if (!paused) db.chats[chatKey].inactivityAlertSent = false;
+      this._write(db);
+      return db.chats[chatKey];
+    }
+    return null;
+  }
+
+  markInactivityAlertSent(phone, sent = true) {
+    const db = this._read();
+    if (!db.chats) db.chats = {};
+    const chatKey = Object.keys(db.chats).find(k => k === phone || (db.chats[k] && db.chats[k].pushName && db.chats[k].pushName.toLowerCase() === phone.toLowerCase()));
+    if (chatKey && db.chats[chatKey]) {
+      db.chats[chatKey].inactivityAlertSent = sent;
       this._write(db);
       return db.chats[chatKey];
     }

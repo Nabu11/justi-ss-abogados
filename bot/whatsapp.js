@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import makeWASocket, { useMultiFileAuthState, DisconnectReason, downloadMediaMessage } from '@whiskeysockets/baileys';
 import QRCode from 'qrcode';
 import { processIncomingMessage } from './justiEngine.js';
+import { db } from '../config/database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,12 +30,13 @@ class WhatsAppManager {
 
   async initialize() {
     try {
-      console.log('🏛️ Cargando librería Baileys para WhatsApp...');
-      const { state, saveCreds } = await useMultiFileAuthState('baileys_auth_info');
+      const authPath = path.join(__dirname, '..', 'data', 'baileys_auth_info');
+      const { state, saveCreds } = await useMultiFileAuthState(authPath);
 
       this.sock = makeWASocket({
         auth: state,
-        printQRInTerminal: false
+        printQRInTerminal: true,
+        defaultQueryTimeoutMs: undefined
       });
 
       this.sock.ev.on('creds.update', saveCreds);
@@ -43,10 +45,9 @@ class WhatsAppManager {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
-          console.log('📱 ¡NUEVO CÓDIGO QR REAL DE WHATSAPP RECIBIDO!');
+          console.log('📱 Código QR de WhatsApp generado. Escanéalo en el panel web.');
           try {
-            const dataUrl = await QRCode.toDataURL(qr, { margin: 2, scale: 8 });
-            this.qrCode = dataUrl;
+            this.qrCode = await QRCode.toDataURL(qr);
             this.status = 'qr_ready';
             whatsappEmitter.emit('qr', this.qrCode);
             whatsappEmitter.emit('status', 'qr_ready');
@@ -56,13 +57,12 @@ class WhatsAppManager {
         }
 
         if (connection === 'close') {
-          const statusCode = lastDisconnect?.error?.output?.statusCode;
-          const shouldReconnect = (statusCode !== DisconnectReason?.loggedOut);
-          console.log('⚠️ Conexión cerrada. Razón:', statusCode, '¿Reconectar?:', shouldReconnect);
+          const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+          console.log(`❌ Conexión cerrada. Razón: ${lastDisconnect?.error}. Reconectando: ${shouldReconnect}`);
           this.status = 'disconnected';
           whatsappEmitter.emit('status', 'disconnected');
           if (shouldReconnect) {
-            setTimeout(() => this.initialize(), 3000);
+            setTimeout(() => this.initialize(), 5000);
           }
         } else if (connection === 'open') {
           console.log('✅ ¡Conectado exitosamente a WhatsApp!');
@@ -72,12 +72,12 @@ class WhatsAppManager {
         }
       });
 
-      // Handle Incoming WhatsApp Messages & Media Attachments
+      // Handle Incoming & Outbound WhatsApp Messages
       this.sock.ev.on('messages.upsert', async (m) => {
         if (m.type !== 'notify') return;
 
         for (const msg of m.messages) {
-          if (!msg.key || msg.key.fromMe || !msg.message) continue;
+          if (!msg.key || !msg.message) continue;
 
           // 1. Deduplication Check by Message ID
           const msgId = msg.key.id;
@@ -85,6 +85,26 @@ class WhatsAppManager {
             continue;
           }
           if (msgId) processedMsgIds.add(msgId);
+
+          // Handle Outbound Messages sent manually by Nahuel from phone or Web
+          if (msg.key.fromMe) {
+            const remoteJid = msg.key.remoteJid;
+            if (remoteJid && !remoteJid.includes('@g.us') && !remoteJid.includes(this.adminPhoneJid)) {
+              const clientPhone = remoteJid.split('@')[0];
+              const pushName = msg.pushName || clientPhone;
+              const text = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
+              
+              // Filter out system automated alerts sent by Baileys
+              if (text && !text.startsWith('🔔 *ALERTA JUSTI') && !text.startsWith('⏰ *ALERTA') && !text.startsWith('🚨 *ALERTA')) {
+                db.saveMessage(clientPhone, pushName, 'admin', text);
+                
+                // AUTO-PAUSE Justi for this client chat when lawyer messages manually!
+                db.toggleBotPause(clientPhone, true);
+                console.log(`⏸ Bot pausado automáticamente en el chat con ${pushName} (${clientPhone}) por respuesta manual del abogado.`);
+              }
+            }
+            continue;
+          }
 
           // 2. Ignore Historical Messages (Received during initial WhatsApp sync > 60 seconds old)
           const msgTimestamp = (msg.messageTimestamp || 0) * 1000;
@@ -144,14 +164,9 @@ class WhatsAppManager {
       } catch (err) {
         console.error('Error enviando alerta por WhatsApp al administrador:', err.message);
       }
+    } else {
+      console.warn('No se pudo enviar alerta de administración: WhatsApp no está conectado.');
     }
-  }
-
-  getStatus() {
-    return {
-      status: this.status,
-      qrCode: this.qrCode
-    };
   }
 }
 

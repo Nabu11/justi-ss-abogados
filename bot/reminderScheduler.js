@@ -10,12 +10,14 @@ export function startReminderScheduler() {
   setInterval(() => {
     checkAndSendReminders();
     checkAndSendMorningReport();
+    checkPausedChatInactivity();
   }, 15 * 60 * 1000);
 
   // Initial check after server start
   setTimeout(() => {
     checkAndSendReminders();
     checkAndSendMorningReport();
+    checkPausedChatInactivity();
   }, 12000);
 }
 
@@ -93,6 +95,47 @@ export async function checkAndSendMorningReport() {
       console.log('☀️ Reporte matutino diario enviado exitosamente a Nahuel.');
     } catch (err) {
       console.error('Error enviando reporte matutino:', err);
+    }
+  }
+}
+
+export async function checkPausedChatInactivity() {
+  if (whatsappManager.status !== 'connected' || !whatsappManager.sock) return;
+
+  const now = new Date();
+  const utcHours = now.getUTCHours() - 3;
+  const currentHour = utcHours < 0 ? utcHours + 24 : utcHours;
+
+  // Only send inactivity alerts during daytime / office hours (8:00 to 20:00)
+  if (currentHour < 8 || currentHour >= 20) return;
+
+  const chats = db.getChats();
+  const pausedChats = chats.filter(c => c.pausedBot && !c.inactivityAlertSent && c.lastMessageTime);
+
+  for (const chat of pausedChats) {
+    const lastTime = new Date(chat.lastMessageTime).getTime();
+    const elapsedMinutes = (now.getTime() - lastTime) / (1000 * 60);
+
+    // If chat has been inactive for 2 hours (120 minutes)
+    if (elapsedMinutes >= 120) {
+      const hoursStr = (elapsedMinutes / 60).toFixed(1);
+      const timeFormatted = new Date(chat.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      const alertMsg = 
+        `⏰ *ALERTA DE INACTIVIDAD EN CHAT PAUSADO*\n` +
+        `• *Cliente:* ${chat.pushName} (${chat.phone})\n` +
+        `• *Último mensaje registrado:* "${chat.lastMessage}"\n` +
+        `• *Tiempo sin interacción:* ${hoursStr} horas (último mensaje: ${timeFormatted} hs)\n` +
+        `• *Estado:* Bot pausado por respuesta manual.\n` +
+        `• *Acción:* Podés responderle desde tu celular o reactivar a Justi enviando: '!reanudar ${chat.pushName}'`;
+
+      try {
+        await whatsappManager.sendAdminAlert(alertMsg);
+        db.markInactivityAlertSent(chat.phone, true);
+        console.log(`⏰ Alerta de inactividad enviada a Nahuel para el chat pausado de ${chat.pushName}`);
+      } catch (err) {
+        console.error('Error enviando alerta de inactividad:', err);
+      }
     }
   }
 }
