@@ -100,12 +100,17 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
+  if (pathname === '/api/whatsapp/qr' && method === 'GET') {
+    return sendJSON(whatsappManager.getStatus());
+  }
+
   // SSE Events Stream
   if (pathname === '/api/whatsapp/events' && method === 'GET') {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
+      'Cache-Control': 'no-cache, no-transform',
       'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
       'Access-Control-Allow-Origin': '*'
     });
 

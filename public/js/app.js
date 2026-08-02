@@ -86,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEvents();
   fetchInitialData();
   connectWhatsAppSSE();
+  pollWhatsAppQR();
   renderSimulator();
 });
 
@@ -222,11 +223,6 @@ function setupEvents() {
       { sender: 'bot', text: '¡Hola! Soy Justi, secretaria virtual de S&S Abogados. 👋 ¿En qué podemos ayudarte hoy?', timestamp: new Date().toISOString() }
     ];
     renderSimulator();
-  });
-
-  // Quick Test button switches to Simulator tab
-  document.getElementById('btn-quick-test').addEventListener('click', () => {
-    switchTab('simulator');
   });
 
   // Clear Database Event
@@ -669,37 +665,70 @@ function renderSimulator() {
   container.scrollTop = container.scrollHeight;
 }
 
-// SSE Connection for WhatsApp QR & Status
-function connectWhatsAppSSE() {
-  const evtSource = new EventSource('/api/whatsapp/events');
+function handleQRData(qrData) {
+  const qrImg = document.getElementById('qr-image');
+  const qrPlace = document.getElementById('qr-placeholder');
+  if (qrData) {
+    qrImg.src = qrData;
+    qrImg.style.display = 'block';
+    qrPlace.style.display = 'none';
+  }
+}
+
+function handleWhatsAppStatus(status) {
+  state.whatsappStatus = status;
   const dot = document.getElementById('wa-dot');
   const text = document.getElementById('wa-status-text');
   const sub = document.getElementById('wa-status-sub');
   const qrImg = document.getElementById('qr-image');
   const qrPlace = document.getElementById('qr-placeholder');
 
-  evtSource.onmessage = (e) => {
-    const event = JSON.parse(e.data);
-    if (event.type === 'status') {
-      state.whatsappStatus = event.data;
-      dot.className = `status-indicator-dot ${event.data}`;
+  dot.className = `status-indicator-dot ${status}`;
 
-      if (event.data === 'connected') {
-        text.innerText = 'Conectado a WhatsApp';
-        sub.innerText = 'Justi respondiendo automáticamente';
-        qrImg.style.display = 'none';
-        qrPlace.innerHTML = '✅ <strong>WhatsApp Conectado Exitosamente</strong><p>Justi está lista y activa recibiendo mensajes.</p>';
-      } else if (event.data === 'qr_ready') {
-        text.innerText = 'QR Pendiente';
-        sub.innerText = 'Escaneá para iniciar sesión';
-      } else {
-        text.innerText = 'Desconectado';
-        sub.innerText = 'Verificá tu conexión';
+  if (status === 'connected') {
+    text.innerText = 'Conectado a WhatsApp';
+    sub.innerText = 'Justi respondiendo automáticamente';
+    qrImg.style.display = 'none';
+    qrPlace.style.display = 'flex';
+    qrPlace.innerHTML = '✅ <strong>WhatsApp Conectado Exitosamente</strong><p>Justi está lista y activa recibiendo mensajes.</p>';
+  } else if (status === 'qr_ready') {
+    text.innerText = 'QR Pendiente';
+    sub.innerText = 'Escaneá para iniciar sesión';
+  } else {
+    text.innerText = 'Desconectado';
+    sub.innerText = 'Verificá tu conexión';
+  }
+}
+
+// HTTP Polling Fallback for QR Image
+async function pollWhatsAppQR() {
+  const check = async () => {
+    try {
+      const res = await fetch('/api/whatsapp/qr');
+      const data = await res.json();
+      handleWhatsAppStatus(data.status);
+      if (data.qrCode) {
+        handleQRData(data.qrCode);
       }
-    } else if (event.type === 'qr') {
-      qrImg.src = event.data;
-      qrImg.style.display = 'block';
-      qrPlace.style.display = 'none';
-    }
+    } catch (e) {}
   };
+  check();
+  setInterval(check, 2500);
+}
+
+// SSE Connection for WhatsApp QR & Status
+function connectWhatsAppSSE() {
+  try {
+    const evtSource = new EventSource('/api/whatsapp/events');
+    evtSource.onmessage = (e) => {
+      const event = JSON.parse(e.data);
+      if (event.type === 'status') {
+        handleWhatsAppStatus(event.data);
+      } else if (event.type === 'qr') {
+        handleQRData(event.data);
+      }
+    };
+  } catch (e) {
+    console.error('SSE Error:', e);
+  }
 }
