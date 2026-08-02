@@ -179,6 +179,7 @@
             </div>
             <div class="header-actions">
               <input type="text" class="input-search" id="search-apts" placeholder="🔍 Buscar por nombre, DNI o teléfono...">
+              <button class="btn btn-gold" id="btn-new-apt-tab">✨ Cita Manual</button>
               <button class="btn btn-outline" id="btn-export-csv">📥 Exportar CSV</button>
               <button class="btn btn-outline" id="btn-print-pdf">🖨️ Imprimir PDF</button>
             </div>
@@ -464,7 +465,7 @@
   <div class="modal-backdrop" id="modal-apt" style="display:none;">
     <div class="modal-card glass-card">
       <div class="modal-header">
-        <h3>✨ Agendar Nuevo Turno</h3>
+        <h3>✨ Agendar Cita o Consulta Manual</h3>
         <button class="btn-close" id="btn-close-modal">✕</button>
       </div>
       <form id="form-new-apt">
@@ -512,16 +513,16 @@
         </div>
         <div class="form-group">
           <label>Breve Descripción del Caso</label>
-          <textarea id="apt-desc" class="form-control" rows="2" placeholder="Detalle sintético..."></textarea>
+          <textarea id="apt-desc" class="form-control" rows="2" placeholder="Detalle sintético o consulta externa..."></textarea>
         </div>
         <div class="form-group">
           <label class="checkbox-label">
-            <input type="checkbox" id="apt-urgent"> 🚨 Marcar como Asunto Urgante
+            <input type="checkbox" id="apt-urgent"> 🚨 Marcar como Asunto Urgente
           </label>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" id="btn-cancel-modal">Cancelar</button>
-          <button type="submit" class="btn btn-gold">Confirmar y Guardar Turno</button>
+          <button type="submit" class="btn btn-gold">Confirmar y Guardar Cita</button>
         </div>
       </form>
     </div>

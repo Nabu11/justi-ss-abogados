@@ -184,10 +184,14 @@ function setupEvents() {
     setTimeout(() => window.print(), 300);
   });
 
-  // New Appointment Modal
-  document.getElementById('btn-new-apt').addEventListener('click', () => {
+  // New Appointment Modal (Main & Tab Buttons)
+  const openModal = () => {
     document.getElementById('modal-apt').style.display = 'flex';
-  });
+  };
+  document.getElementById('btn-new-apt').addEventListener('click', openModal);
+  const btnNewAptTab = document.getElementById('btn-new-apt-tab');
+  if (btnNewAptTab) btnNewAptTab.addEventListener('click', openModal);
+
   document.getElementById('btn-close-modal').addEventListener('click', () => {
     document.getElementById('modal-apt').style.display = 'none';
   });
@@ -195,7 +199,7 @@ function setupEvents() {
     document.getElementById('modal-apt').style.display = 'none';
   });
 
-  // Submit New Appointment
+  // Submit New Appointment (Manual or External Client)
   document.getElementById('form-new-apt').addEventListener('submit', async (e) => {
     e.preventDefault();
     const newApt = {
@@ -206,7 +210,7 @@ function setupEvents() {
       date: document.getElementById('apt-date').value,
       time: document.getElementById('apt-time').value,
       phone: document.getElementById('apt-phone').value,
-      description: document.getElementById('apt-desc').value,
+      description: document.getElementById('apt-desc').value || 'Turno registrado manualmente',
       isUrgent: document.getElementById('apt-urgent').checked,
       status: 'confirmado'
     };
@@ -222,6 +226,7 @@ function setupEvents() {
         document.getElementById('modal-apt').style.display = 'none';
         document.getElementById('form-new-apt').reset();
         await fetchAppointments();
+        alert('✅ Cita agendada correctamente.');
       }
     } catch (err) {
       alert('Error guardando el turno');

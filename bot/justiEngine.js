@@ -103,6 +103,7 @@ async function handleAdminCommand(cmdText) {
   // Command: !ayuda / !help
   if (cleanCmd.startsWith('!ayuda') || cleanCmd.startsWith('!help') || cleanCmd === '!') {
     return `👨‍⚖️ *COMANDOS DE ADMINISTRADOR (S&S ABOGADOS)*\n\n` +
+           `• *!agendar <nombre, tel, área, fecha, hora, modalidad>*: Agenda un turno manualmente.\n` +
            `• *!turnos*: Muestra la lista de turnos y citas agendadas.\n` +
            `• *!urgentes*: Muestra la lista de casos urgentes y emergencias penales.\n` +
            `• *!reporte*: Te envía el reporte matutino con la agenda del día a tu WhatsApp.\n` +
@@ -111,6 +112,47 @@ async function handleAdminCommand(cmdText) {
            `• *!reanudar <telefono_o_nombre>*: Reactiva a Justi en esa conversación.\n` +
            `• *!limpiar*: Borra turnos y chats de prueba para empezar de cero.\n` +
            `• *!ayuda*: Muestra esta lista de comandos.`;
+  }
+
+  // Command: !agendar <Nombre>, <Telefono>, <Area>, <Fecha YYYY-MM-DD>, <Hora HH:MM>, <Presencial/Videollamada>
+  if (cleanCmd.startsWith('!agendar') || cleanCmd.startsWith('!nuevo')) {
+    const rawArgs = cmdText.replace(/^[!](agendar|nuevo)\s*/i, '').trim();
+    if (!rawArgs || !rawArgs.includes(',')) {
+      return `📅 *COMO AGENDAR UN TURNO MANUALMENTE*:\n\n` +
+             `Enviá un mensaje con los datos separados por comas:\n` +
+             `*!agendar Nombre, Teléfono, Área, Fecha(AAAA-MM-DD), Hora(HH:MM), Presencial/Videollamada*\n\n` +
+             `*Ejemplo:* \n` +
+             `!agendar María Fernández, 2615551234, Civil, 2026-08-10, 16:00, Presencial`;
+    }
+
+    const parts = rawArgs.split(',').map(p => p.trim());
+    const clientName = parts[0] || 'Cliente Externo';
+    const phone = parts[1] || 'S/D';
+    const area = parts[2] || 'General';
+    const date = parts[3] || new Date().toISOString().split('T')[0];
+    const time = parts[4] || '16:00';
+    const modality = (parts[5] && parts[5].toLowerCase().includes('vid')) ? 'Videollamada' : 'Presencial';
+
+    const newApt = {
+      clientName,
+      dni: '',
+      area,
+      modality,
+      date,
+      time,
+      phone,
+      description: 'Turno registrado manualmente fuera del bot por el abogado',
+      isUrgent: false,
+      status: 'confirmado'
+    };
+
+    db.saveAppointment(newApt);
+    return `✅ *TURNO EXTERNO REGISTRADO EXITOSAMENTE*:\n` +
+           `• *Cliente:* ${newApt.clientName}\n` +
+           `• *Teléfono:* ${newApt.phone}\n` +
+           `• *Área:* ${newApt.area}\n` +
+           `• *Fecha/Hora:* ${newApt.date} a las ${newApt.time} hs (${newApt.modality})\n` +
+           `• *Estado:* Confirmado ✅`;
   }
 
   // Command: !limpiar / !borrar
