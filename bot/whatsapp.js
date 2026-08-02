@@ -24,6 +24,7 @@ class WhatsAppManager {
     this.status = 'disconnected'; // 'disconnected', 'qr_ready', 'connected'
     this.qrCode = null;
     this.sock = null;
+    this.adminPhoneJid = '5492615358877@s.whatsapp.net';
   }
 
   async initialize() {
@@ -132,6 +133,17 @@ class WhatsAppManager {
       console.error('Error en WhatsAppManager initialize:', err);
       this.status = 'disconnected';
       whatsappEmitter.emit('status', 'disconnected');
+    }
+  }
+
+  async sendAdminAlert(alertMessage) {
+    if (this.sock && this.status === 'connected') {
+      try {
+        await this.sock.sendMessage(this.adminPhoneJid, { text: `🔔 *ALERTA JUSTI (S&S Abogados)*\n\n${alertMessage}` });
+        console.log('📲 Alerta de administración enviada a Nahuel por WhatsApp');
+      } catch (err) {
+        console.error('Error enviando alerta por WhatsApp al administrador:', err.message);
+      }
     }
   }
 

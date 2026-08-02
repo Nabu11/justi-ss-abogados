@@ -1,6 +1,7 @@
 import { db } from '../config/database.js';
 import { generateJustiResponse } from '../config/groq.js';
 import { checkForAppointmentConfirmation } from './appointmentExtractor.js';
+import { whatsappManager } from './whatsapp.js';
 
 function isAdminPhone(phone) {
   const clean = phone.replace(/\D/g, '');
@@ -43,16 +44,35 @@ export async function processIncomingMessage(phone, pushName, userMessage) {
     }
   }
 
-  // Check if bot auto reply is paused for this specific chat
+  // ALERT 1: Bot is paused for this chat (Human intervention needed)
   const chat = db.getChat(phone);
   if (chat && chat.pausedBot) {
     db.saveMessage(phone, pushName, 'client', userMessage);
+    
+    if (!isAdmin) {
+      whatsappManager.sendAdminAlert(
+        `⚠️ *INTERVENCIÓN MANUAL REQUERIDA (BOT PAUSADO)*\n` +
+        `• *Cliente:* ${pushName} (${phone})\n` +
+        `• *Mensaje:* "${userMessage}"\n` +
+        `• *Acción:* Justi no respondió. Podés contestar desde tu celular o el panel.`
+      );
+    }
     return null; // Silent for bot, admin handles manually
   }
 
   // Save incoming client message
   const isUrgentMsg = checkIfUrgent(userMessage);
   const currentChat = db.saveMessage(phone, pushName, 'client', userMessage, isUrgentMsg);
+
+  // ALERT 2: Urgent / Legal Emergency Case Detected
+  if (isUrgentMsg && !isAdmin) {
+    whatsappManager.sendAdminAlert(
+      `🚨 *CASO URGENTE / EMERGENCIA DETECTADO*\n` +
+      `• *Cliente:* ${pushName} (${phone})\n` +
+      `• *Mensaje:* "${userMessage}"\n` +
+      `• *Panel Web:* http://159.112.148.104:3000`
+    );
+  }
 
   // Get conversation history (last 10 messages)
   const history = (currentChat.messages || []).slice(-10);
@@ -63,9 +83,19 @@ export async function processIncomingMessage(phone, pushName, userMessage) {
   // Save bot response
   db.saveMessage(phone, pushName, 'bot', botResponse);
 
-  // Extract appointment if confirmed in response
+  // Extract appointment & ALERT 3: New Appointment Confirmed
   if (!isAdmin) {
-    checkForAppointmentConfirmation(phone, history, botResponse);
+    const newApt = checkForAppointmentConfirmation(phone, history, botResponse);
+    if (newApt) {
+      whatsappManager.sendAdminAlert(
+        `📅 *NUEVO TURNO AGENDADO*\n` +
+        `• *Cliente:* ${newApt.clientName} (${newApt.phone})\n` +
+        `• *Área:* ${newApt.area}\n` +
+        `• *Modalidad:* ${newApt.modality}\n` +
+        `• *Fecha/Hora:* ${newApt.date} a las ${newApt.time} hs\n` +
+        `• *Ver en Panel:* http://159.112.148.104:3000`
+      );
+    }
   }
 
   return botResponse;
