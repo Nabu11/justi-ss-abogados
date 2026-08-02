@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Justi — Secretaria Virtual | S&S Abogados</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">🏛️</div>
+        <div class="brand-text">
+          <h2>S&S Abogados</h2>
+          <span class="sub-brand">Justi Virtual Bot</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="dashboard">
+          <span class="nav-icon">📊</span>
+          <span>Panel General</span>
+        </button>
+        <button class="nav-item" data-tab="appointments">
+          <span class="nav-icon">📅</span>
+          <span>Gestor de Turnos</span>
+          <span class="badge badge-accent" id="badge-appointments-count">0</span>
+        </button>
+        <button class="nav-item" data-tab="chats">
+          <span class="nav-icon">💬</span>
+          <span>Chats WhatsApp</span>
+        </button>
+        <button class="nav-item" data-tab="analytics">
+          <span class="nav-icon">📈</span>
+          <span>Analíticas & Reportes</span>
+        </button>
+        <button class="nav-item" data-tab="simulator">
+          <span class="nav-icon">🤖</span>
+          <span>Simulador de Justi</span>
+        </button>
+        <button class="nav-item" data-tab="settings">
+          <span class="nav-icon">⚙️</span>
+          <span>Configuración</span>
+        </button>
+      </nav>
+
+      <div class="whatsapp-status-card" id="wa-status-box">
+        <div class="status-indicator-dot disconnected" id="wa-dot"></div>
+        <div class="status-info">
+          <strong id="wa-status-text">Desconectado</strong>
+          <small id="wa-status-sub">Esperando escaneo QR</small>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <button class="btn btn-outline" id="btn-logout" style="width: 100%; font-size: 12px; padding: 8px;">
+          🚪 Cerrar Sesión
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Navbar -->
+      <header class="top-header">
+        <div class="header-title">
+          <h1 id="page-title">Panel General</h1>
+          <p class="header-subtitle">Capitán de Fragata Moyano 171, Piso 1, Mendoza, Argentina</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-outline" id="btn-toggle-sound" title="Activar Sonido de Alertas">🔔 Sonido: ON</button>
+          <button class="btn btn-outline" id="btn-export-csv" title="Exportar Citas a Excel/CSV">📊 Excel</button>
+          <button class="btn btn-outline" id="btn-print-pdf" title="Imprimir Planilla o Guardar PDF">🖨️ PDF</button>
+          <button class="btn btn-primary" id="btn-new-apt">+ Nuevo Turno</button>
+        </div>
+      </header>
+
+      <!-- TAB 1: DASHBOARD -->
+      <section class="tab-content active" id="tab-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-value" id="stat-total-apts">0</div>
+            <div class="stat-label">Turnos Registrados</div>
+          </div>
+          <div class="stat-card urgent-highlight">
+            <div class="stat-icon">🚨</div>
+            <div class="stat-value" id="stat-urgent-apts">0</div>
+            <div class="stat-label">Casos Urgentes</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">💬</div>
+            <div class="stat-value" id="stat-active-chats">0</div>
+            <div class="stat-label">Chats Activos</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⚡</div>
+            <div class="stat-value" id="stat-bot-engine">Groq LLM</div>
+            <div class="stat-label">Motor Activo</div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- WhatsApp QR Box -->
+          <div class="card glass-card">
+            <div class="card-header">
+              <h3>📱 Vinculación de WhatsApp</h3>
+              <span class="badge" id="qr-badge">Escaneá para conectar</span>
+            </div>
+            <div class="card-body text-center">
+              <div class="qr-container" id="qr-container">
+                <img id="qr-image" src="" alt="Cargando Código QR..." style="display:none;">
+                <div id="qr-placeholder" class="qr-placeholder">
+                  <div class="spinner"></div>
+                  <p>Iniciando servicio de WhatsApp...</p>
+                </div>
+              </div>
+              <p class="qr-help">Abre WhatsApp en tu teléfono > Dispositivos vinculados > Vincular un dispositivo.</p>
+            </div>
+          </div>
+
+          <!-- Quick Appointments Overview -->
+          <div class="card glass-card">
+            <div class="card-header">
+              <h3>📋 Próximos Turnos Agendados</h3>
+              <button class="btn btn-sm btn-link" onclick="switchTab('appointments')">Ver todos →</button>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table" id="table-dash-apts">
+                  <thead>
+                    <tr>
+                      <th>Cliente</th>
+                      <th>Área</th>
+                      <th>Fecha/Hora</th>
+                      <th>Modalidad</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Injected by JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: APPOINTMENTS -->
+      <section class="tab-content" id="tab-appointments">
+        <div class="card glass-card">
+          <div class="card-header">
+            <div class="filter-group">
+              <button class="btn-filter active" data-filter="all">Todos</button>
+              <button class="btn-filter" data-filter="pendiente">Pendientes</button>
+              <button class="btn-filter" data-filter="confirmado">Confirmados</button>
+              <button class="btn-filter" data-filter="atendido">Atendidos</button>
+              <button class="btn-filter" data-filter="cancelado">Cancelados</button>
+            </div>
+            <input type="text" id="search-apts" class="input-search" placeholder="🔍 Buscar cliente, DNI o teléfono...">
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table" id="table-all-apts">
+                <thead>
+                  <tr>
+                    <th>Cliente / DNI</th>
+                    <th>Área / Descripción</th>
+                    <th>Fecha & Hora</th>
+                    <th>Contacto</th>
+                    <th>Urgencia</th>
+                    <th>Modalidad</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="apts-tbody">
+                  <!-- Injected by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: CHATS -->
+      <section class="tab-content" id="tab-chats">
+        <div class="chats-layout">
+          <!-- Chat List -->
+          <div class="chat-list-panel glass-card">
+            <div class="panel-header">
+              <h3>Conversaciones</h3>
+            </div>
+            <div class="chat-items-container" id="chat-items-list">
+              <!-- Injected by JS -->
+            </div>
+          </div>
+
+          <!-- Active Conversation -->
+          <div class="chat-timeline-panel glass-card" id="chat-active-panel">
+            <div class="timeline-header" id="active-chat-header">
+              <div>
+                <h4 id="active-chat-name">Selecciona una conversación</h4>
+                <small id="active-chat-phone"></small>
+              </div>
+              <div class="timeline-controls">
+                <button class="btn btn-sm btn-warning" id="btn-toggle-bot">⏸ Pausar Bot</button>
+              </div>
+            </div>
+            <div class="messages-container" id="messages-container">
+              <div class="empty-state">
+                <span>💬</span>
+                <p>Seleccioná un chat de la izquierda para ver el historial y responder manualmente.</p>
+              </div>
+            </div>
+
+            <!-- Quick Template Pills Bar -->
+            <div class="quick-templates-bar">
+              <span class="quick-label">⚡ Respuestas Rápidas:</span>
+              <button class="btn-pill" onclick="insertQuickTemplate('doc')">📄 Traer DNI/Docs</button>
+              <button class="btn-pill" onclick="insertQuickTemplate('audiencia')">⚖️ En audiencia</button>
+              <button class="btn-pill" onclick="insertQuickTemplate('cbu')">💳 Datos Bancarios</button>
+              <button class="btn-pill" onclick="insertQuickTemplate('gps')">📍 Enviar Ubicación GPS</button>
+            </div>
+
+            <div class="chat-input-box">
+              <input type="text" id="input-manual-msg" placeholder="Escribí un mensaje directo por WhatsApp..." disabled>
+              <button class="btn btn-primary" id="btn-send-manual" disabled>Enviar</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: ANALYTICS -->
+      <section class="tab-content" id="tab-analytics">
+        <div class="settings-grid">
+          <div class="card glass-card">
+            <div class="card-header">
+              <h3>⚖️ Consultas por Área Jurídica</h3>
+            </div>
+            <div class="card-body" id="analytics-area-container">
+              <!-- Bar charts injected by JS -->
+            </div>
+          </div>
+
+          <div class="card glass-card">
+            <div class="card-header">
+              <h3>👥 Modalidad de Atenciones</h3>
+            </div>
+            <div class="card-body" id="analytics-modality-container">
+              <!-- Bar charts injected by JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: SIMULATOR -->
+      <section class="tab-content" id="tab-simulator">
+        <div class="simulator-layout glass-card">
+          <div class="simulator-header">
+            <div>
+              <h3>🤖 Simulador Interactivo de Justi</h3>
+              <p>Probá las respuestas y el flujo de recolección de datos de Justi antes de enviar mensajes reales por WhatsApp.</p>
+            </div>
+            <button class="btn btn-sm btn-outline" id="btn-reset-sim">🔄 Reiniciar Chat</button>
+          </div>
+          <div class="sim-timeline" id="sim-timeline">
+            <!-- Simulated messages injected here -->
+          </div>
+          <div class="sim-input-box">
+            <input type="text" id="input-sim-msg" placeholder="Escribí como si fueras un cliente del estudio jurídico...">
+            <button class="btn btn-gold" id="btn-send-sim">Enviar a Justi 🚀</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 6: SETTINGS -->
+      <section class="tab-content" id="tab-settings">
+        <div class="settings-grid">
+          <div class="card glass-card">
+            <div class="card-header">
+              <h3>🔑 Inteligencia Artificial (Groq API)</h3>
+            </div>
+            <div class="card-body">
+              <form id="form-settings-groq">
+                <div class="form-group">
+                  <label for="groq-key-input">Groq API Key</label>
+                  <input type="password" id="groq-key-input" class="form-control" placeholder="gsk_...">
+                  <small class="form-help">Si tenés una clave de Groq, ingresala acá para habilitar el motor Llama 3.3 70B.</small>
+                </div>
+                <div class="form-group">
+                  <label for="groq-model-select">Modelo Seleccionado</label>
+                  <select id="groq-model-select" class="form-control">
+                    <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile (Recomendado)</option>
+                    <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant (Ultra Rápido)</option>
+                    <option value="mixtral-8x7b-32768">Mixtral 8x7b</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="checkbox-label" style="color: var(--text-main);">
+                    <input type="checkbox" id="chk-auto-reminders" checked> ⏰ Recordatorios Automáticos por WhatsApp (24hs antes)
+                  </label>
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar Ajustes de IA & Recordatorios</button>
+              </form>
+            </div>
+          </div>
+
+          <div class="card glass-card">
+            <div class="card-header">
+              <h3>🏛️ Datos del Estudio</h3>
+            </div>
+            <div class="card-body">
+              <div class="info-row">
+                <strong>Estudio Jurídico:</strong> <span>S&S Abogados</span>
+              </div>
+              <div class="info-row">
+                <strong>Dirección:</strong> <span>Capitán de Fragata Moyano 171, Piso 1, Mendoza</span>
+              </div>
+              <div class="info-row">
+                <strong>WhatsApp / Teléfono:</strong> <span>2617243850</span>
+              </div>
+              <div class="info-row">
+                <strong>Áreas de Práctica:</strong> <span>Civil, Penal, Laboral, Familia, Litigios vs Estado/Municipios</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card glass-card" style="margin-top: 24px; border-color: rgba(239, 68, 68, 0.3);">
+            <div class="card-header">
+              <h3 style="color: #ef4444;">🗑️ Administrar Base de Datos</h3>
+            </div>
+            <div class="card-body">
+              <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+                Limpiar turnos y chats almacenados para dejar la aplicación lista para producción.
+              </p>
+              <button type="button" class="btn btn-outline" id="btn-clear-db" style="border-color: #ef4444; color: #ef4444;">
+                🗑️ Limpiar Todos los Datos
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal for New Appointment -->
+  <div class="modal-backdrop" id="modal-apt" style="display:none;">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <h3>➕ Agendar Nuevo Turno</h3>
+        <button class="btn-close" id="btn-close-modal">✕</button>
+      </div>
+      <form id="form-new-apt">
+        <div class="form-group">
+          <label>Nombre y Apellido del Cliente</label>
+          <input type="text" id="apt-name" class="form-control" required placeholder="Ej: Juan Pérez">
+        </div>
+        <div class="form-group">
+          <label>DNI (Opcional)</label>
+          <input type="text" id="apt-dni" class="form-control" placeholder="Ej: 35123456">
+        </div>
+        <div class="form-row">
+          <div class="form-group col">
+            <label>Área Legal</label>
+            <select id="apt-area" class="form-control">
+              <option value="Civil">Civil</option>
+              <option value="Penal">Penal</option>
+              <option value="Laboral">Laboral</option>
+              <option value="Familia">Familia</option>
+              <option value="Litigios Estado/Municipio">Litigios Estado/Municipio</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+          <div class="form-group col">
+            <label>Modalidad</label>
+            <select id="apt-modality" class="form-control">
+              <option value="Presencial">Presencial (Estudio)</option>
+              <option value="Videollamada">Videollamada</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col">
+            <label>Fecha</label>
+            <input type="date" id="apt-date" class="form-control" required>
+          </div>
+          <div class="form-group col">
+            <label>Hora</label>
+            <input type="time" id="apt-time" class="form-control" required value="16:00">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Teléfono de Contacto</label>
+          <input type="text" id="apt-phone" class="form-control" required placeholder="Ej: 2615551234">
+        </div>
+        <div class="form-group">
+          <label>Breve Descripción del Caso</label>
+          <textarea id="apt-desc" class="form-control" rows="2" placeholder="Detalle sintético..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="apt-urgent"> 🚨 Marcar como Asunto Urgante
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="btn-cancel-modal">Cancelar</button>
+          <button type="submit" class="btn btn-gold">Confirmar y Guardar Turno</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="js/app.js"></script>
+</body>
+</html>
