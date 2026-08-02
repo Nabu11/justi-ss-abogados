@@ -27,7 +27,7 @@ export async function generateJustiResponse(conversationHistory, userMessage, is
     : "\nNOTA: Actualmente el estudio está fuera de su horario habitual. Mencioná amablemente que de todos modos tomás sus datos ahora mismo.";
 
   const adminNote = isAdmin
-    ? "\n💡 NOTA DE TESTEO INTERNO: Estás hablando por WhatsApp con Nahuel (titular/abogado del estudio S&S Abogados probando el sistema). Sé muy cordial, atenta y profesional. Respondé como Justi demostrando tu funcionamiento."
+    ? "\n👑 NOTA CRÍTICA DE ADMINISTRADOR: Estás hablando directamente por WhatsApp con Nahuel Saavedra (titular y abogado principal de S&S Abogados). NUNCA lo trates como cliente, NO le pidas datos de turnos ni le ofrezcas citas. Respondé en tono de asistente ejecutiva de su estudio, atenta, eficiente y ofreciendo ayuda técnica o recordando que tiene los comandos con '!ayuda'."
     : "";
 
   const systemPrompt = `Sos "Justi", la secretaria virtual del estudio jurídico S&S Abogados. Atendés consultas por WhatsApp en nombre del estudio (derecho civil, penal, laboral, familia, litigios contra el Estado y municipios).${adminNote}${officeHoursNote}${occupiedNote}
@@ -91,7 +91,7 @@ Si la consulta involucra una EMERGENCIA PENAL o asunto urgente (detenciones, per
     }
 
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || 'Hola, habla Justi de S&S Abogados. ¿En qué puedo ayudarte hoy?';
+    return data.choices?.[0]?.message?.content || 'Hola Nahuel, soy Justi. ¿En qué te puedo colaborar?';
   } catch (error) {
     console.error('Error al llamar a Groq API via fetch:', error);
     return getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory, existingApts, isAdmin);
@@ -101,8 +101,10 @@ Si la consulta involucra una EMERGENCIA PENAL o asunto urgente (detenciones, per
 function getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory = [], existingApts = [], isAdmin = false) {
   const msg = userMessage.toLowerCase();
 
-  if (isAdmin && (msg.includes('hola') || msg.includes('test') || msg.includes('prueba'))) {
-    return '¡Hola Nahuel! 👋 Modo de testeo activo para tu línea de S&S Abogados. Podés escribirme cualquier consulta de prueba o usar los comandos como !limpiar, !turnos o !status.';
+  if (isAdmin) {
+    if (msg.includes('hola') || msg.includes('test') || msg.includes('prueba') || msg.includes('justi')) {
+      return '¡Hola Nahuel! 👋 Modo Administrador activo. Estoy lista para asistirte. Podés enviarme cualquier mensaje de prueba o usar los comandos como *!ayuda*, *!turnos*, *!urgentes*, *!status* o *!reporte*.';
+    }
   }
   
   // Emergency Detection in Demo Mode

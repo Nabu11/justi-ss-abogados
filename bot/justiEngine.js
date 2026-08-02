@@ -1,15 +1,19 @@
 import { generateJustiResponse } from '../config/groq.js';
 import { db } from '../config/database.js';
 import { whatsappManager } from './whatsapp.js';
+import { checkAndSendMorningReport } from './reminderScheduler.js';
 
 // Personal phone number of Nahuel for admin commands and notifications
 const ADMIN_PHONE = '2615358877';
-const ADMIN_JID_PHONE = '5492615358877@s.whatsapp.net';
+const ADMIN_LID = '192182690549936';
 
 export async function processIncomingMessage(phone, pushName, userMessage) {
   console.log(`📩 Mensaje recibido de ${pushName} (${phone}): "${userMessage}"`);
 
-  const isAdmin = phone.includes(ADMIN_PHONE) || phone.includes('2615358877');
+  // Airtight admin identification (phone, multi-device LID, or pushName)
+  const isAdmin = phone.includes(ADMIN_PHONE) || 
+                  phone.includes(ADMIN_LID) || 
+                  (pushName && pushName.toLowerCase().includes('nahuel'));
 
   // Handle Admin WhatsApp Commands for phone 2615358877
   if (isAdmin && userMessage.startsWith('!')) {
@@ -96,11 +100,26 @@ function checkIfUrgent(text) {
 async function handleAdminCommand(cmdText) {
   const cleanCmd = cmdText.trim().toLowerCase();
 
+  // Command: !ayuda / !help
+  if (cleanCmd.startsWith('!ayuda') || cleanCmd.startsWith('!help') || cleanCmd === '!') {
+    return `👨‍⚖️ *COMANDOS DE ADMINISTRADOR (S&S ABOGADOS)*\n\n` +
+           `• *!turnos*: Muestra la lista de turnos y citas agendadas.\n` +
+           `• *!urgentes*: Muestra la lista de casos urgentes y emergencias penales.\n` +
+           `• *!reporte*: Te envía el reporte matutino con la agenda del día a tu WhatsApp.\n` +
+           `• *!status*: Revisa el estado del servidor, Inteligencia Artificial y WhatsApp.\n` +
+           `• *!pausa <telefono_o_nombre>*: Pausa a Justi en un chat específico para responder vos.\n` +
+           `• *!reanudar <telefono_o_nombre>*: Reactiva a Justi en esa conversación.\n` +
+           `• *!limpiar*: Borra turnos y chats de prueba para empezar de cero.\n` +
+           `• *!ayuda*: Muestra esta lista de comandos.`;
+  }
+
+  // Command: !limpiar / !borrar
   if (cleanCmd.startsWith('!limpiar') || cleanCmd.startsWith('!borrar')) {
     db.clearAllData();
     return '🧹 *Base de Datos Limpiada*: Se han eliminado todos los turnos y conversaciones de prueba correctamente.';
   }
 
+  // Command: !turnos / !resumen
   if (cleanCmd.startsWith('!turnos') || cleanCmd.startsWith('!resumen')) {
     const apts = db.getAppointments();
     if (apts.length === 0) return '📅 *Resumen de Agenda*: No hay turnos agendados en el sistema por el momento.';
@@ -112,6 +131,29 @@ async function handleAdminCommand(cmdText) {
     return reply;
   }
 
+  // Command: !urgentes
+  if (cleanCmd.startsWith('!urgentes')) {
+    const apts = db.getAppointments().filter(a => a.isUrgent);
+    const chats = db.getChats().filter(c => c.isUrgent);
+
+    if (apts.length === 0 && chats.length === 0) {
+      return '🚨 *Casos Urgentes*: No hay emergencias ni casos urgentes pendientes por el momento. ✅';
+    }
+
+    let reply = `🚨 *CASOS URGENTES Y EMERGENCIAS (${chats.length})*:\n`;
+    chats.forEach((c, i) => {
+      reply += `\n${i + 1}. *${c.pushName}* (${c.phone})\n   • Último mensaje: "${c.lastMessage}"\n   • Hora: ${new Date(c.lastMessageTime).toLocaleTimeString()}\n`;
+    });
+    return reply;
+  }
+
+  // Command: !reporte
+  if (cleanCmd.startsWith('!reporte')) {
+    await checkAndSendMorningReport();
+    return '☀️ *Reporte Generado*: Se ha enviado el resumen diario a tu celular.';
+  }
+
+  // Command: !status / !estado
   if (cleanCmd.startsWith('!status') || cleanCmd.startsWith('!estado')) {
     const settings = db.getSettings();
     const aptsCount = db.getAppointments().length;
@@ -126,15 +168,25 @@ async function handleAdminCommand(cmdText) {
            `• *Panel Web:* http://159.112.148.104:3000`;
   }
 
-  if (cleanCmd.startsWith('!ayuda') || cleanCmd.startsWith('!help')) {
-    return `💡 *COMANDOS DE ADMINISTRADOR DE S&S ABOGADOS*:\n\n` +
-           `• *!turnos*: Muestra la lista completa de turnos agendados.\n` +
-           `• *!status*: Muestra el estado técnico del servidor e Inteligencia Artificial.\n` +
-           `• *!limpiar*: Borra todos los turnos y conversaciones de prueba para empezar de cero.\n` +
-           `• *!ayuda*: Muestra esta lista de comandos.`;
+  // Command: !pausa <target>
+  if (cleanCmd.startsWith('!pausa')) {
+    const target = cleanCmd.replace('!pausa', '').trim();
+    if (!target) return '⚠️ Modo de uso: *!pausa <telefono_o_nombre>* (ej: !pausa 2615551234)';
+    const updated = db.toggleBotPause(target, true);
+    if (updated) return `⏸ *Bot Pausado*: Justi no responderá en el chat de *${updated.pushName}*. Podés responder vos manualmente.`;
+    return `⚠️ No se encontró ninguna conversación activa con: *${target}*.`;
   }
 
-  return '❓ Comando no reconocido. Escribí *!ayuda* para ver la lista de comandos disponibles.';
+  // Command: !reanudar <target>
+  if (cleanCmd.startsWith('!reanudar')) {
+    const target = cleanCmd.replace('!reanudar', '').trim();
+    if (!target) return '⚠️ Modo de uso: *!reanudar <telefono_o_nombre>* (ej: !reanudar 2615551234)';
+    const updated = db.toggleBotPause(target, false);
+    if (updated) return `▶ *Bot Reanudado*: Justi vuelve a responder automáticamente a *${updated.pushName}*.`;
+    return `⚠️ No se encontró ninguna conversación activa con: *${target}*.`;
+  }
+
+  return '❓ Comando no reconocido. Escribí *!ayuda* para ver la lista de comandos de administración.';
 }
 
 function checkForAppointmentConfirmation(phone, history, botResponse) {
