@@ -1,6 +1,6 @@
 import { db } from './database.js';
 
-export async function generateJustiResponse(conversationHistory, userMessage) {
+export async function generateJustiResponse(conversationHistory, userMessage, isAdmin = false) {
   const settings = db.getSettings();
   const apiKey = settings.groqApiKey || process.env.GROQ_API_KEY;
 
@@ -26,7 +26,11 @@ export async function generateJustiResponse(conversationHistory, userMessage) {
     ? "" 
     : "\nNOTA: Actualmente el estudio está fuera de su horario de atención presencial (Lunes a Viernes de 8 a 20hs). Mencioná amablemente que de todos modos tomás sus datos ahora mismo para asignarle el primer turno disponible.";
 
-  const systemPrompt = `Sos "Justi", la secretaria virtual del estudio jurídico S&S Abogados. Atendés consultas por WhatsApp en nombre del estudio (derecho civil, penal, laboral, familia, litigios contra el Estado y municipios).${officeHoursNote}${occupiedNote}
+  const adminNote = isAdmin
+    ? "\n💡 NOTA DE TESTEO INTERNO: Estás hablando por WhatsApp con Nahuel (titular/abogado del estudio S&S Abogados probando el sistema). Sé muy cordial, atenta y profesional. Si te saluda o hace preguntas de prueba, respondé como Justi demostrando tu funcionamiento."
+    : "";
+
+  const systemPrompt = `Sos "Justi", la secretaria virtual del estudio jurídico S&S Abogados. Atendés consultas por WhatsApp en nombre del estudio (derecho civil, penal, laboral, familia, litigios contra el Estado y municipios).${adminNote}${officeHoursNote}${occupiedNote}
 
 ## REGLAS ESTRICTAS DE HORARIOS, MODALIDADES Y TURNOS
 1. **Duración de cada turno**: Cada consulta dura **1 hora exacta**.
@@ -57,7 +61,7 @@ export async function generateJustiResponse(conversationHistory, userMessage) {
 - Tono cordial, formal pero cercano ("usted" o "vos" según el cliente). Respuestas cortas (2 a 4 líneas).`;
 
   if (!apiKey) {
-    return getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory, existingApts);
+    return getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory, existingApts, isAdmin);
   }
 
   try {
@@ -87,19 +91,23 @@ export async function generateJustiResponse(conversationHistory, userMessage) {
     if (!response.ok) {
       const errText = await response.text();
       console.error('Groq API Error:', response.status, errText);
-      return getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory, existingApts);
+      return getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory, existingApts, isAdmin);
     }
 
     const data = await response.json();
     return data.choices?.[0]?.message?.content || 'Hola, habla Justi de S&S Abogados. ¿En qué puedo ayudarte hoy?';
   } catch (error) {
     console.error('Error al llamar a Groq API via fetch:', error);
-    return getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory, existingApts);
+    return getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory, existingApts, isAdmin);
   }
 }
 
-function getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory = [], existingApts = []) {
+function getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory = [], existingApts = [], isAdmin = false) {
   const msg = userMessage.toLowerCase();
+
+  if (isAdmin && (msg.includes('hola') || msg.includes('test') || msg.includes('prueba'))) {
+    return '¡Hola Nahuel! 👋 Modo de testeo activo para tu línea de S&S Abogados. Podés escribirme cualquier consulta de prueba o usar los comandos como !limpiar, !turnos o !status.';
+  }
   
   if (msg.includes('donde') || msg.includes('dónde') || msg.includes('direccion') || msg.includes('dirección') || msg.includes('como llego') || msg.includes('ubicacion') || msg.includes('ubicación')) {
     return 'Nuestra oficina atiende los Viernes en Capitán de Fragata Moyano 171, Piso 1, Mendoza. 📍 Abrir en Google Maps: https://maps.google.com/?q=-32.8988,-68.8475. (De Lunes a Jueves las citas presenciales son de 15 a 20hs en lugar a confirmar).';
@@ -114,7 +122,6 @@ function getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory 
     return `¡Hola! Soy Justi, secretaria de S&S Abogados. 👋${greetingExtra} Los turnos son de 1 hora: Virtuales (8 a 20hs) o Presenciales (15 a 20hs). ¿En qué podemos ayudarte hoy?`;
   }
 
-  // Count past bot interactions in history to progress step-by-step
   const botMsgs = conversationHistory.filter(m => m.sender === 'bot');
   const lastBotMsg = botMsgs.length > 0 ? botMsgs[botMsgs.length - 1].text : '';
 
