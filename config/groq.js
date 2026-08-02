@@ -50,7 +50,7 @@ export async function generateJustiResponse(conversationHistory, userMessage) {
 - Sin emojis excesivos (máximo 1 por mensaje).`;
 
   if (!apiKey) {
-    return getOfflineDemoResponse(userMessage, isOfficeHours);
+    return getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory);
   }
 
   try {
@@ -80,30 +80,30 @@ export async function generateJustiResponse(conversationHistory, userMessage) {
     if (!response.ok) {
       const errText = await response.text();
       console.error('Groq API Error:', response.status, errText);
-      return getOfflineDemoResponse(userMessage, isOfficeHours);
+      return getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory);
     }
 
     const data = await response.json();
     return data.choices?.[0]?.message?.content || 'Hola, habla Justi de S&S Abogados. ¿En qué puedo ayudarte hoy?';
   } catch (error) {
     console.error('Error al llamar a Groq API via fetch:', error);
-    return getOfflineDemoResponse(userMessage, isOfficeHours);
+    return getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory);
   }
 }
 
-function getOfflineDemoResponse(userMessage, isOfficeHours) {
+function getOfflineDemoResponse(userMessage, isOfficeHours, conversationHistory = []) {
   const msg = userMessage.toLowerCase();
   
   if (msg.includes('donde') || msg.includes('dónde') || msg.includes('direccion') || msg.includes('dirección') || msg.includes('como llego') || msg.includes('ubicacion') || msg.includes('ubicación')) {
     return 'Estamos en Capitán de Fragata Moyano 171, Piso 1, Mendoza. 📍 Podés ver cómo llegar en Google Maps: https://maps.google.com/?q=-32.8988,-68.8475';
   }
 
-  if (msg.includes('urgente') || msg.includes('deten') || msg.includes('violencia') || msg.includes('polic') || msg.includes('preso')) {
-    return 'Entiendo la gravedad de la situación. Por tratarse de un asunto urgente, un abogado de S&S Abogados se comunicará con vos a la brevedad. Por favor dejenos un teléfono directo.';
+  if (msg.includes('urgente') || msg.includes('deten') || msg.includes('violencia') || msg.includes('polic') || msg.includes('preso') || msg.includes('echaron')) {
+    return 'Entiendo la gravedad e importancia de tu situación. Por tratarse de un tema urgente, un abogado de S&S Abogados se pondrá en contacto con vos a la brevedad. Por favor confirmanos tu nombre completo.';
   }
   
   if (msg.includes('hola') || msg.includes('buenas') || msg.includes('dia') || msg.includes('tarde')) {
-    const greetingExtra = isOfficeHours ? '' : ' Te aclaramos que estamos fuera del horario presencial, pero con gusto tomamos tus datos para asignarte turno.';
+    const greetingExtra = isOfficeHours ? '' : ' Te aclaramos que estamos fuera del horario presencial (Lunes a Viernes de 8 a 20hs), pero con gusto tomamos tus datos.';
     return `¡Hola! Soy Justi, secretaria virtual de S&S Abogados. 👋${greetingExtra} ¿En qué podemos ayudarte hoy?`;
   }
 
@@ -111,9 +111,21 @@ function getOfflineDemoResponse(userMessage, isOfficeHours) {
     return 'Ese punto lo evalúa detalladamente el abogado durante la consulta legal. Si querés, coordinamos un turno presencial o por videollamada para revisar tu caso.';
   }
 
+  // Count past bot interactions in history to progress step-by-step
+  const botMsgs = conversationHistory.filter(m => m.sender === 'bot');
+  const lastBotMsg = botMsgs.length > 0 ? botMsgs[botMsgs.length - 1].text : '';
+
+  if (lastBotMsg.includes('nombre') || lastBotMsg.includes('datos')) {
+    return '¡Gracias por facilitarnos tus datos! ¿A qué área legal corresponde tu consulta (Civil, Penal, Laboral, Familia) y qué día preferís la cita?';
+  }
+
+  if (lastBotMsg.includes('área legal') || lastBotMsg.includes('día')) {
+    return 'Excelente. Quedó anotado tu pedido de consulta. Un abogado del estudio se comunicará a la brevedad para confirmar el horario exacto. ¿Tenés alguna otra duda o consulta?';
+  }
+
   if (msg.includes('turno') || msg.includes('consulta') || msg.includes('abogado') || msg.includes('cita')) {
     return 'Con gusto agendamos una consulta. Para empezar, ¿me podrías indicar tu nombre y apellido completo?';
   }
 
-  return '¡Gracias por escribir a S&S Abogados! Para agendar tu consulta en nuestro estudio (Capitán de Fragata Moyano 171, Mendoza), ¿me decís tu nombre completo y el motivo de tu consulta?';
+  return '¡Gracias por escribir a S&S Abogados! Tomamos nota de tu mensaje. Para coordinar una cita en nuestro estudio (Capitán de Fragata Moyano 171, Mendoza), ¿me decís tu nombre completo y preferencia de horario?';
 }
