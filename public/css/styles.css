@@ -221,9 +221,15 @@ body {
   margin-bottom: 24px;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .header-title h1 {
   font-family: var(--font-heading);
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
 }
 
@@ -1163,6 +1169,139 @@ body {
   gap: 8px;
   cursor: pointer;
   color: var(--accent-red);
+}
+
+/* --- MOBILE RESPONSIVE STYLES --- */
+.mobile-toggle-btn {
+  display: none;
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid var(--border-gold);
+  color: var(--accent-gold);
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-close-sidebar {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 20px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 998;
+}
+
+@media (max-width: 768px) {
+  .mobile-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .btn-close-sidebar {
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 280px;
+    box-shadow: 8px 0 24px rgba(0,0,0,0.5);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+  }
+
+  .main-content {
+    padding: 18px 16px;
+  }
+
+  .top-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .dashboard-grid, .settings-grid, .simulator-wrapper {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .chats-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .chat-list-panel {
+    height: 300px;
+  }
+
+  .phone-frame {
+    width: 100%;
+    height: 520px;
+    border-width: 8px;
+    border-radius: 24px;
+  }
+
+  .welcome-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+  }
+
+  .input-search {
+    width: 100%;
+  }
+
+  .flex-wrap-mobile {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
 }
 
 /* Print Styles for PDF export */

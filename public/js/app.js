@@ -85,6 +85,7 @@ async function authFetch(url, options = {}) {
 document.addEventListener('DOMContentLoaded', () => {
   setupNavigation();
   setupEvents();
+  setupMobileDrawer();
   fetchInitialData();
   connectWhatsAppSSE();
   pollWhatsAppQR();
@@ -102,8 +103,38 @@ function setupNavigation() {
   });
 }
 
+function setupMobileDrawer() {
+  const sidebar = document.getElementById('app-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const btnOpenSidebar = document.getElementById('btn-toggle-sidebar');
+  const btnCloseSidebar = document.getElementById('btn-close-sidebar');
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    overlay.classList.add('active');
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('active');
+  }
+
+  if (btnOpenSidebar) btnOpenSidebar.addEventListener('click', openSidebar);
+  if (btnCloseSidebar) btnCloseSidebar.addEventListener('click', closeSidebar);
+  if (overlay) overlay.addEventListener('click', closeSidebar);
+}
+
+function closeMobileSidebar() {
+  const sidebar = document.getElementById('app-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  if (sidebar) sidebar.classList.remove('open');
+  if (overlay) overlay.classList.remove('active');
+}
+
 function switchTab(tabName) {
   state.currentTab = tabName;
+  closeMobileSidebar();
+
   document.querySelectorAll('.nav-item').forEach(b => {
     b.classList.toggle('active', b.getAttribute('data-tab') === tabName);
   });

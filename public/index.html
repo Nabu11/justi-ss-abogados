@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Justi - S&S Abogados | Panel de Control</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,14 +11,18 @@
 </head>
 <body>
   <div class="app-layout">
+    <!-- Backdrop Overlay for Mobile Sidebar -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="app-sidebar">
       <div class="brand">
         <div class="brand-avatar">⚖️</div>
         <div class="brand-text">
           <h2>S&S ABOGADOS</h2>
           <span class="sub-brand">Estudio Jurídico</span>
         </div>
+        <button class="btn-close-sidebar" id="btn-close-sidebar">✕</button>
       </div>
 
       <div class="assistant-mini-card">
@@ -67,12 +71,15 @@
     <main class="main-content">
       <!-- Header -->
       <header class="top-header">
-        <div class="header-title">
-          <h1 id="page-title">¡Hola! Bienvenido al centro de control 👋</h1>
-          <p class="header-subtitle">Gestión de consultas legales, turnos y asistente virtual Justi</p>
+        <div class="header-left">
+          <button class="mobile-toggle-btn" id="btn-toggle-sidebar">☰ Menú</button>
+          <div class="header-title">
+            <h1 id="page-title">¡Hola! Bienvenido al centro de control 👋</h1>
+            <p class="header-subtitle">Gestión de consultas legales, turnos y asistente virtual Justi</p>
+          </div>
         </div>
         <div class="header-actions">
-          <button class="btn btn-outline" id="btn-toggle-sound">🔔 Sonido: ON</button>
+          <button class="btn btn-outline" id="btn-toggle-sound">🔔 Sonido</button>
           <button class="btn btn-primary" id="btn-new-apt">✨ Nuevo Turno</button>
           <button class="btn btn-outline" id="btn-logout">🚪 Salir</button>
         </div>
@@ -162,7 +169,7 @@
       <!-- TAB 2: APPOINTMENTS -->
       <section class="tab-content" id="tab-appointments">
         <div class="card glass-card">
-          <div class="card-header">
+          <div class="card-header flex-wrap-mobile">
             <div class="filter-group">
               <button class="btn-filter active" data-filter="all">Todos los turnos</button>
               <button class="btn-filter" data-filter="pendiente">Pendientes</button>
