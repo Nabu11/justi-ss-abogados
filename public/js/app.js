@@ -115,7 +115,7 @@ function switchTab(tabName) {
     appointments: '📅 Gestor de Turnos & Citas',
     chats: '💬 Conversaciones de WhatsApp',
     analytics: '📈 Reportes & Métricas',
-    simulator: '🤖 Probador Interactivo de Justi',
+    simulator: '🤖 Probador Interactivo de Justi (Simulador WhatsApp)',
     settings: '⚙️ Configuración del Sistema'
   };
   document.getElementById('page-title').innerText = titles[tabName] || '¡Hola! Bienvenido al centro de control 👋';
@@ -253,6 +253,24 @@ function setupEvents() {
   });
 }
 
+// Preset Test Scenario Runner for Simulator
+async function runSimScenario(type) {
+  const scenarioTexts = {
+    urgent: 'Buenas tardes, tuvieron detenido a mi hermano en la comisaría 3ra y necesitamos asistencia penal urgente.',
+    presencial: 'Hola, quisiera agendar un turno presencial en la oficina para este Viernes a las 16hs por un tema civil.',
+    virtual: 'Buenas, necesito coordinar una consulta por Videollamada el próximo Martes a las 11hs por una consulta laboral.',
+    gps: 'Hola, ¿dónde queda exactamente la oficina del estudio y cómo hago para llegar?',
+    offhours: 'Buenas noches, escribo para consultar por un despido e indemnización laboral.'
+  };
+
+  const text = scenarioTexts[type];
+  if (!text) return;
+
+  const input = document.getElementById('input-sim-msg');
+  input.value = text;
+  sendSimulatedMessage();
+}
+
 // Quick Templates for Chat
 function insertQuickTemplate(type) {
   const input = document.getElementById('input-manual-msg');
@@ -363,7 +381,6 @@ function renderAnalyticsCharts(data) {
   const areaContainer = document.getElementById('analytics-area-container');
   const modContainer = document.getElementById('analytics-modality-container');
 
-  // Areas Bar Chart
   const totalApts = data.totalAppointments || 1;
   const areaEntries = Object.entries(data.areaBreakdown || {});
   
@@ -389,7 +406,6 @@ function renderAnalyticsCharts(data) {
     areaContainer.innerHTML = areaHtml;
   }
 
-  // Modalities Bar Chart
   const modEntries = Object.entries(data.modalityBreakdown || {});
   let modHtml = '<div class="bar-chart-list">';
   modEntries.forEach(([mod, count]) => {
@@ -694,6 +710,7 @@ async function sendSimulatedMessage() {
 
 function renderSimulator() {
   const container = document.getElementById('sim-timeline');
+  if (!container) return;
   container.innerHTML = '';
   state.simMessages.forEach(m => {
     const row = document.createElement('div');

@@ -336,7 +336,7 @@ body {
   font-weight: 600;
 }
 
-/* --- CHATS SECTION REDESIGN --- */
+/* --- CHATS SECTION --- */
 .chats-layout {
   display: grid;
   grid-template-columns: 320px 1fr;
@@ -454,7 +454,7 @@ body {
   margin-bottom: 12px;
 }
 
-/* --- CLEAR MESSAGE BUBBLES WITH DISTINCT SENDER STYLES --- */
+/* --- MESSAGE BUBBLES WITH SENDER CARDS --- */
 .message-row {
   display: flex;
   flex-direction: column;
@@ -502,7 +502,6 @@ body {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-/* 👤 CLIENTE (Left alignment, dark slate background) */
 .message-row.client .message-bubble-card {
   background: #1e293b;
   color: #f8fafc;
@@ -510,7 +509,6 @@ body {
   border-top-left-radius: 4px;
 }
 
-/* 🤖 BOT IA (Right alignment, warm gold gradient) */
 .message-row.bot .message-bubble-card {
   background: linear-gradient(135deg, rgba(234, 179, 8, 0.18), rgba(30, 41, 59, 0.95));
   color: #fef08a;
@@ -518,7 +516,6 @@ body {
   border-top-right-radius: 4px;
 }
 
-/* 👨‍⚖️ ABOGADO / ADMIN (Right alignment, blue gradient) */
 .message-row.admin .message-bubble-card {
   background: linear-gradient(135deg, rgba(37, 99, 235, 0.25), rgba(30, 41, 59, 0.95));
   color: #e0f2fe;
@@ -591,6 +588,173 @@ body {
   background: var(--accent-gold);
   color: #000;
   font-weight: 600;
+}
+
+/* --- SIMULATOR REDESIGN: SMARTPHONE FRAME & SCENARIO BUTTONS --- */
+.simulator-wrapper {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.sim-controls-card {
+  height: 100%;
+}
+
+.sim-scenarios-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-scenario {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  color: var(--text-main);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-scenario:hover {
+  background: rgba(234, 179, 8, 0.1);
+  border-color: var(--border-gold);
+  transform: translateX(4px);
+}
+
+.scen-icon {
+  font-size: 22px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 8px;
+  border-radius: 10px;
+}
+
+.scen-text strong {
+  display: block;
+  font-size: 13px;
+  color: var(--accent-gold);
+}
+
+.scen-text small {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+  display: block;
+}
+
+/* Phone Frame */
+.phone-frame {
+  max-width: 440px;
+  height: 600px;
+  margin: 0 auto;
+  background: #0b141a; /* Authentic WhatsApp Dark background */
+  border: 12px solid #1e293b;
+  border-radius: 36px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.phone-notch {
+  width: 120px;
+  height: 18px;
+  background: #1e293b;
+  margin: 0 auto;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.phone-header {
+  padding: 12px 18px;
+  background: #1f2c34;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.phone-avatar {
+  font-size: 20px;
+  background: rgba(234, 179, 8, 0.2);
+  padding: 6px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-gold);
+}
+
+.phone-contact-info strong {
+  display: block;
+  font-size: 13.5px;
+  color: #e9edef;
+}
+
+.phone-contact-info small {
+  font-size: 11px;
+  color: #00a884;
+  font-weight: 600;
+}
+
+.phone-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-image: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.phone-footer {
+  padding: 10px 14px;
+  background: #1f2c34;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.phone-footer input {
+  flex: 1;
+  background: #2a3942;
+  border: none;
+  color: #e9edef;
+  padding: 10px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+}
+
+.phone-footer input:focus {
+  outline: none;
+}
+
+.btn-sim-send {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--accent-gold);
+  color: #000;
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.btn-sim-send:hover {
+  transform: scale(1.05);
 }
 
 /* Glass Cards */

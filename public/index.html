@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Justi — Asistente Virtual | S&S Abogados</title>
+  <title>Justi - S&S Abogados | Panel de Control</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
@@ -11,101 +11,86 @@
 </head>
 <body>
   <div class="app-layout">
-    <!-- Sidebar Navigation -->
+    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-avatar">⚖️</div>
         <div class="brand-text">
-          <h2>S&S Abogados</h2>
-          <span class="sub-brand">Estudio Jurídico Moyano 171</span>
+          <h2>S&S ABOGADOS</h2>
+          <span class="sub-brand">Estudio Jurídico</span>
         </div>
       </div>
 
       <div class="assistant-mini-card">
         <div class="assistant-avatar">🤖</div>
         <div class="assistant-info">
-          <strong>Justi Asistente</strong>
+          <strong>Justi IA</strong>
           <span class="status-badge-online">● En línea</span>
         </div>
       </div>
 
       <nav class="nav-menu">
         <button class="nav-item active" data-tab="dashboard">
-          <span class="nav-icon">🏠</span>
-          <span>Inicio & Resumen</span>
+          <span class="nav-icon">📊</span> Panel General
         </button>
         <button class="nav-item" data-tab="appointments">
-          <span class="nav-icon">📅</span>
-          <span>Gestor de Turnos</span>
-          <span class="badge badge-accent" id="badge-appointments-count">0</span>
+          <span class="nav-icon">📅</span> Gestor de Turnos
+          <span class="badge-accent" id="badge-appointments-count">0</span>
         </button>
         <button class="nav-item" data-tab="chats">
-          <span class="nav-icon">💬</span>
-          <span>Conversaciones</span>
+          <span class="nav-icon">💬</span> Chats WhatsApp
         </button>
         <button class="nav-item" data-tab="analytics">
-          <span class="nav-icon">📈</span>
-          <span>Reportes & Métricas</span>
+          <span class="nav-icon">📈</span> Reportes & Métricas
         </button>
         <button class="nav-item" data-tab="simulator">
-          <span class="nav-icon">🤖</span>
-          <span>Probador de Justi</span>
+          <span class="nav-icon">🤖</span> Probador de Justi
         </button>
         <button class="nav-item" data-tab="settings">
-          <span class="nav-icon">⚙️</span>
-          <span>Configuración</span>
+          <span class="nav-icon">⚙️</span> Configuración
         </button>
       </nav>
 
-      <div class="whatsapp-status-card" id="wa-status-box">
+      <div class="whatsapp-status-card">
         <div class="status-indicator-dot disconnected" id="wa-dot"></div>
         <div class="status-info">
           <strong id="wa-status-text">WhatsApp Desconectado</strong>
-          <small id="wa-status-sub">Esperando escaneo de QR</small>
+          <small id="wa-status-sub">Verificá la conexión</small>
         </div>
-      </div>
-
-      <div style="margin-top: 16px;">
-        <button class="btn btn-outline" id="btn-logout" style="width: 100%; font-size: 12px; padding: 10px; border-radius: 12px;">
-          🚪 Cerrar Sesión
-        </button>
       </div>
     </aside>
 
-    <!-- Main Content Area -->
+    <!-- Main Content -->
     <main class="main-content">
-      <!-- Top Navbar -->
+      <!-- Header -->
       <header class="top-header">
         <div class="header-title">
           <h1 id="page-title">¡Hola! Bienvenido al centro de control 👋</h1>
-          <p class="header-subtitle">Capitán de Fragata Moyano 171, Piso 1, Mendoza, Argentina</p>
+          <p class="header-subtitle">Gestión de consultas legales, turnos y asistente virtual Justi</p>
         </div>
         <div class="header-actions">
-          <button class="btn btn-outline" id="btn-toggle-sound" title="Activar Sonido de Alertas">🔔 Sonido: ON</button>
-          <button class="btn btn-outline" id="btn-export-csv" title="Exportar Citas a Excel/CSV">📊 Excel</button>
-          <button class="btn btn-outline" id="btn-print-pdf" title="Imprimir Planilla o Guardar PDF">🖨️ PDF</button>
+          <button class="btn btn-outline" id="btn-toggle-sound">🔔 Sonido: ON</button>
           <button class="btn btn-primary" id="btn-new-apt">✨ Nuevo Turno</button>
+          <button class="btn btn-outline" id="btn-logout">🚪 Salir</button>
         </div>
       </header>
 
       <!-- TAB 1: DASHBOARD -->
       <section class="tab-content active" id="tab-dashboard">
-        <!-- Friendly Welcome Banner -->
-        <div class="welcome-banner glass-card">
+        <div class="welcome-banner">
           <div class="welcome-text">
-            <h2>¡Hola equipo de S&S Abogados! 👋</h2>
-            <p>Justi está atendiendo cordialmente las consultas por WhatsApp. Podés revisar los turnos confirmados y las consultas urgentes en tiempo real.</p>
+            <h2>🏛️ Sistema de Atención Virtual - S&S Abogados</h2>
+            <p>Justi está atendiendo tus consultas de WhatsApp de forma inteligente, clasificando urgencias y agendando turnos presenciales o virtuales.</p>
           </div>
-          <div class="welcome-badge">
-            <span>✨ Asistente Operativo 24/7</span>
-          </div>
+          <div class="welcome-badge">🚀 Servidor Activo</div>
         </div>
 
+        <!-- Stats Grid -->
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon">📅</div>
             <div class="stat-value" id="stat-total-apts">0</div>
-            <div class="stat-label">Turnos Registrados</div>
+            <div class="stat-label">Turnos Totales</div>
           </div>
           <div class="stat-card urgent-highlight">
             <div class="stat-icon">🚨</div>
@@ -115,7 +100,7 @@
           <div class="stat-card">
             <div class="stat-icon">💬</div>
             <div class="stat-value" id="stat-active-chats">0</div>
-            <div class="stat-label">Conversaciones Activas</div>
+            <div class="stat-label">Conversaciones</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">⚡</div>
@@ -182,7 +167,11 @@
               <button class="btn-filter" data-filter="atendido">Atendidos</button>
               <button class="btn-filter" data-filter="cancelado">Cancelados</button>
             </div>
-            <input type="text" id="search-apts" class="input-search" placeholder="🔍 Buscar por cliente, DNI o teléfono...">
+            <div class="header-actions">
+              <input type="text" class="input-search" id="search-apts" placeholder="🔍 Buscar por nombre, DNI o teléfono...">
+              <button class="btn btn-outline" id="btn-export-csv">📥 Exportar CSV</button>
+              <button class="btn btn-outline" id="btn-print-pdf">🖨️ Imprimir PDF</button>
+            </div>
           </div>
           <div class="card-body">
             <div class="table-responsive">
@@ -192,8 +181,8 @@
                     <th>Cliente / DNI</th>
                     <th>Área / Descripción</th>
                     <th>Fecha & Hora</th>
-                    <th>Contacto</th>
-                    <th>Prioridad</th>
+                    <th>Teléfono</th>
+                    <th>Urgente</th>
                     <th>Modalidad</th>
                     <th>Estado</th>
                     <th>Acciones</th>
@@ -210,9 +199,9 @@
 
       <!-- TAB 3: CHATS -->
       <section class="tab-content" id="tab-chats">
-        <div class="chats-layout">
+        <div class="chats-layout glass-card">
           <!-- Chat List -->
-          <div class="chat-list-panel glass-card">
+          <div class="chat-list-panel">
             <div class="panel-header">
               <h3>💬 Conversaciones WhatsApp</h3>
             </div>
@@ -221,31 +210,32 @@
             </div>
           </div>
 
-          <!-- Active Conversation -->
-          <div class="chat-timeline-panel glass-card" id="chat-active-panel">
+          <!-- Chat Timeline -->
+          <div class="chat-timeline-panel">
             <div class="timeline-header" id="active-chat-header">
               <div>
-                <h4 id="active-chat-name">Selecciona una conversación</h4>
-                <small id="active-chat-phone"></small>
+                <h4 id="active-chat-name">Seleccioná una conversación</h4>
+                <small id="active-chat-phone">Teléfono de contacto</small>
               </div>
-              <div class="timeline-controls">
-                <button class="btn btn-sm btn-warning" id="btn-toggle-bot">⏸ Pausar Bot</button>
-              </div>
-            </div>
-            <div class="messages-container" id="messages-container">
-              <div class="empty-state">
-                <span>💬</span>
-                <p>Seleccioná un chat de la izquierda para ver el historial y responder cordialmente.</p>
+              <div class="header-actions">
+                <button class="btn btn-sm btn-outline" id="btn-toggle-bot">⏸ Pausar Bot</button>
               </div>
             </div>
 
-            <!-- Quick Template Pills Bar -->
+            <div class="messages-container" id="messages-container">
+              <div class="empty-state">
+                <span>💬</span>
+                <p>Hacé clic en un chat de la izquierda para ver la conversación en tiempo real.</p>
+              </div>
+            </div>
+
+            <!-- Quick Templates Bar -->
             <div class="quick-templates-bar">
               <span class="quick-label">⚡ Respuestas Rápidas:</span>
-              <button class="btn-pill" onclick="insertQuickTemplate('doc')">📄 Traer DNI/Docs</button>
+              <button class="btn-pill" onclick="insertQuickTemplate('doc')">📄 Doc requerida</button>
               <button class="btn-pill" onclick="insertQuickTemplate('audiencia')">⚖️ En audiencia</button>
-              <button class="btn-pill" onclick="insertQuickTemplate('cbu')">💳 Datos Bancarios</button>
-              <button class="btn-pill" onclick="insertQuickTemplate('gps')">📍 Enviar Ubicación GPS</button>
+              <button class="btn-pill" onclick="insertQuickTemplate('cbu')">💳 CBU / Alias</button>
+              <button class="btn-pill" onclick="insertQuickTemplate('gps')">📍 Enviar GPS</button>
             </div>
 
             <div class="chat-input-box">
@@ -279,22 +269,86 @@
         </div>
       </section>
 
-      <!-- TAB 5: SIMULATOR -->
+      <!-- TAB 5: SIMULATOR REDESIGN -->
       <section class="tab-content" id="tab-simulator">
-        <div class="simulator-layout glass-card">
-          <div class="simulator-header">
-            <div>
-              <h3>🤖 Probador Interactivo de Justi</h3>
-              <p>Hacé pruebas y simulá la interacción con Justi antes de enviar mensajes por WhatsApp.</p>
+        <div class="simulator-wrapper">
+          <!-- Left Panel: Preset Test Scenarios -->
+          <div class="card glass-card sim-controls-card">
+            <div class="card-header">
+              <h3>⚡ Escenarios de Prueba Rápidos</h3>
             </div>
-            <button class="btn btn-sm btn-outline" id="btn-reset-sim">🔄 Reiniciar Chat</button>
+            <div class="card-body">
+              <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px;">
+                Probá las respuestas automáticas de Justi en distintos casos de prueba con 1 solo clic:
+              </p>
+
+              <div class="sim-scenarios-list">
+                <button class="btn-scenario" onclick="runSimScenario('urgent')">
+                  <div class="scen-icon">🚨</div>
+                  <div class="scen-text">
+                    <strong>Caso Urgente</strong>
+                    <small>"Detuvieron a mi hermano en la comisaría 3ra..."</small>
+                  </div>
+                </button>
+
+                <button class="btn-scenario" onclick="runSimScenario('presencial')">
+                  <div class="scen-icon">🏢</div>
+                  <div class="scen-text">
+                    <strong>Turno Presencial</strong>
+                    <small>"Quiero una cita presencial el Viernes por la tarde..."</small>
+                  </div>
+                </button>
+
+                <button class="btn-scenario" onclick="runSimScenario('virtual')">
+                  <div class="scen-icon">💻</div>
+                  <div class="scen-text">
+                    <strong>Turno Virtual</strong>
+                    <small>"Necesito consulta por Videollamada el Martes 11hs..."</small>
+                  </div>
+                </button>
+
+                <button class="btn-scenario" onclick="runSimScenario('gps')">
+                  <div class="scen-icon">📍</div>
+                  <div class="scen-text">
+                    <strong>Ubicación & GPS</strong>
+                    <small>"¿Dónde queda la oficina y cómo llego?"</small>
+                  </div>
+                </button>
+
+                <button class="btn-scenario" onclick="runSimScenario('offhours')">
+                  <div class="scen-icon">🌙</div>
+                  <div class="scen-text">
+                    <strong>Consulta Fuera de Horario</strong>
+                    <small>"Buenas noches, escribo para consultar por un despido..."</small>
+                  </div>
+                </button>
+              </div>
+
+              <div style="margin-top: 24px;">
+                <button class="btn btn-outline" id="btn-reset-sim" style="width: 100%;">🔄 Reiniciar Chat de Simulación</button>
+              </div>
+            </div>
           </div>
-          <div class="sim-timeline" id="sim-timeline">
-            <!-- Simulated messages injected here -->
-          </div>
-          <div class="sim-input-box">
-            <input type="text" id="input-sim-msg" placeholder="Escribí un mensaje de prueba como si fueras un cliente...">
-            <button class="btn btn-gold" id="btn-send-sim">Enviar a Justi ✨</button>
+
+          <!-- Right Panel: Smartphone WhatsApp Frame -->
+          <div class="phone-frame">
+            <div class="phone-notch"></div>
+            <div class="phone-header">
+              <div class="phone-avatar">🤖</div>
+              <div class="phone-contact-info">
+                <strong>Justi • S&S Abogados</strong>
+                <small>● En línea • Secretaria Virtual</small>
+              </div>
+            </div>
+
+            <div class="phone-body" id="sim-timeline">
+              <!-- Injected by JS -->
+            </div>
+
+            <div class="phone-footer">
+              <input type="text" id="input-sim-msg" placeholder="Escribí como si fueras un cliente...">
+              <button class="btn-sim-send" id="btn-send-sim">▶</button>
+            </div>
           </div>
         </div>
       </section>
