@@ -28,6 +28,13 @@ class WhatsAppManager {
     this.adminPhoneJid = '5492615358877@s.whatsapp.net';
   }
 
+  getStatus() {
+    return {
+      status: this.status,
+      qrCode: this.qrCode
+    };
+  }
+
   async initialize() {
     try {
       const authPath = path.join(__dirname, '..', 'data', 'baileys_auth_info');
